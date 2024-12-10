@@ -10,7 +10,7 @@ def getElementById(id: String): Option[Node] = {
   undefinedToOption(unsafeElement)
 }
 
-extern io def addEventListener(eventType: String, callback: String => Unit at {io}): Unit =
+extern io def addEventListener(eventType: String, callback: String => Unit at {io, global}): Unit =
   jsWeb """document.addEventListener(${eventType}, 
            (event) => $effekt.runToplevel((ks, k) => ${callback}(event.key, ks, k)))"""
 
@@ -26,7 +26,20 @@ extern io def createCanvas(width: Int, height: Int): Node =
   })()
   """
 
-extern io def drawRect(canvas: Node, x: Int, y: Int, width: Int, height: Int, color: String): Unit =
+extern io def drawRect(canvas: Node, x: Double, y: Double, width: Int, height: Int, color: String): Unit =
   jsWeb """ctx = ${canvas}.getContext("2d");
            ctx.fillStyle = ${color}; 
            ctx.fillRect(${x}, ${y}, ${width}, ${height})"""
+
+extern io def clear(canvas: Node): Unit = 
+  jsWeb """ctx = ${canvas}.getContext("2d");
+           w = ${canvas}.width;
+           h = ${canvas}.height;
+           ctx.clearRect(0, 0, w, h)"""
+
+extern type IdleDeadline
+
+extern io def requestIdleCallback(callback: (IdleDeadline) => Unit at {io, global}): Unit =
+  jsWeb "window.requestIdleCallback(deadline => $effekt.runToplevel((ks, k) => ${callback}(deadline, ks, k)))"
+
+extern io def getTime(): Int = jsWeb "Date.now()"

@@ -3,27 +3,28 @@ module main
 import src/ffi
 
 val KEY_DOWN = "keydown"
-val CANVAS_HEIGHT = 500
-val CANVAS_WIDTH = 500
+val CANVAS_WIDTH = 1920
+val CANVAS_HEIGHT = 1080
 
 type Color {
   Green()
   Red()
 }
 
-def colorToString(color: Color): String = color match {
+def toString(color: Color): String = color match {
   case Green() => "green"
   case Red()   => "red"
 }
 
 type Drawable {
-  Rect(x: Int, y: Int, width: Int, height: Int, color: Color)
-  Circle(x: Int, y: Int, radius: Int)
+  Rect(x: Double, y: Double, width: Int, height: Int, color: Color)
+  Circle(x: Double, y: Double, radius: Int, color: Color)
 }
 
 interface Canvas {
   def get(): Node
-  def drawRect(canvas: Node, x: Int, y: Int, width: Int, height: Int, color: String): Unit
+  def draw(object: Drawable): Unit
+  def clear(): Unit
 }
 
 def canvas[T] { function: () => T / {Canvas} }: T = {
@@ -31,31 +32,60 @@ def canvas[T] { function: () => T / {Canvas} }: T = {
     function()
   } with Canvas {
     def get = resume(getElementById("canvas").getOrElse { createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT) })
-    def drawRect(c, x, y, w, h, cl) = {
-      drawRect(c, x, y, w, h, cl)
+    def draw(object) = {
+      canvas { 
+        object match {
+          case Rect(x, y, width, height, color) => 
+            drawRect(do get(), x, y, width, height, color.toString())
+          case _ => ()
+        } 
+      }
       resume(())
-    } 
+    }
+    def clear = {
+      canvas { clear(do get()) }
+      resume(())
+    }
   }
 }
 
-def draw(object: Drawable): Unit / {Canvas} = object match {
-  case Rect(x, y, width, height, color) => drawRect(do get(), x, y, width, height, colorToString(color))
-  case _                                => ()
+def move(object: Drawable, dx: Double, dy: Double): Drawable = object match {
+  case Rect(x, y, w, h, c) => Rect(x + dx, y + dy, w, h, c)
+  case Circle(x, y, r, c) => Circle(x + dx, y + dy, r, c)
 }
 
 type Event = String
 
-def eventHandler(event: Event): Unit = event match {
-  case "w" => println("Hi") 
-  case "a" =>
-    with canvas; 
-    draw(Rect(300, 100, 150, 100, Red())) 
-  case  _  => ()
-}
-
 def main(): Unit = {
-  canvas {
-    draw(Rect(150, 100, 150, 100, Green()))
+  val PLAYER_WIDTH = 100
+  val PLAYER_HEIGHT = 100
+  val player = ref[Drawable](Rect(150.0, 100.0, PLAYER_WIDTH, PLAYER_HEIGHT, Green()))
+  val now = ref[Int](getTime())
+
+  def render(deadline: IdleDeadline): Unit = {
+    with canvas;
+    do clear()
+    do draw(player.get)
+    requestIdleCallback(render)
+  }
+
+  def calcDt(): Int = {
+    val timeElapsed = getTime() - now.get()
+    now.set(getTime())
+    timeElapsed
+  }
+
+  def eventHandler(event: Event): Unit = event match {
+    case "w" => {
+      val dt: Int = calcDt()
+      val dtToDouble: Double = dt.toDouble
+      player.set(move(player.get, 0.0, -1.0 * dtToDouble / 10.0))
+    }
+    case "a" =>
+      with canvas; 
+      do draw(Rect(300.0, 100.0, 150, 100, Red())) 
+    case  _  => ()
   }
   addEventListener(KEY_DOWN, eventHandler)
+  requestIdleCallback(render)
 }

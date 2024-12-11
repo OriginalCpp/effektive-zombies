@@ -1,5 +1,18 @@
 module ffi
 
+record Vec2d(x: Double, y: Double)
+
+def infixAdd(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x + vec2.x, vec1.y + vec2.y)
+
+def normalize(vec: Vec2d): Vec2d = {
+  val length = sqrt(vec.x * vec.x + vec.y * vec.y)
+  if (length != 0.0) Vec2d(vec.x / length, vec.y / length) else Vec2d(0.0, 0.0)
+}
+
+def infixMul(scalar: Int, vec: Vec2d): Vec2d = scalar.toDouble() * vec
+
+def infixMul(scalar: Double, vec: Vec2d): Vec2d = Vec2d(scalar * vec.x, scalar * vec.y)
+
 extern type Node
 
 extern io def unsafeGetElementById(id: String): Node =

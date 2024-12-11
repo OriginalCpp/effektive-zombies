@@ -3,6 +3,7 @@ module main
 import src/ffi
 
 val KEY_DOWN = "keydown"
+val KEY_UP = "keyup"
 val CANVAS_WIDTH = 1920
 val CANVAS_HEIGHT = 1080
 
@@ -17,13 +18,15 @@ def toString(color: Color): String = color match {
 }
 
 type Drawable {
-  Rect(x: Double, y: Double, width: Int, height: Int, color: Color)
-  Circle(x: Double, y: Double, radius: Int, color: Color)
+  Rect(pos: Vec2d, width: Int, height: Int, color: Color)
+  Circle(pos: Vec2d, radius: Int, color: Color)
 }
+
+record GameObject(hitbox: Drawable, movement: Vec2d)
 
 interface Canvas {
   def get(): Node
-  def draw(object: Drawable): Unit
+  def draw(object: GameObject): Unit
   def clear(): Unit
 }
 
@@ -34,9 +37,9 @@ def canvas[T] { function: () => T / {Canvas} }: T = {
     def get = resume(getElementById("canvas").getOrElse { createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT) })
     def draw(object) = {
       canvas { 
-        object match {
-          case Rect(x, y, width, height, color) => 
-            drawRect(do get(), x, y, width, height, color.toString())
+        object.hitbox match {
+          case Rect(pos, width, height, color) => 
+            drawRect(do get(), pos.x, pos.y, width, height, color.toString())
           case _ => ()
         } 
       }
@@ -49,9 +52,14 @@ def canvas[T] { function: () => T / {Canvas} }: T = {
   }
 }
 
-def move(object: Drawable, dx: Double, dy: Double): Drawable = object match {
-  case Rect(x, y, w, h, c) => Rect(x + dx, y + dy, w, h, c)
-  case Circle(x, y, r, c) => Circle(x + dx, y + dy, r, c)
+def move(object: Ref[GameObject], dt: Int): Unit = {
+  val newHitbox = move(object.get.hitbox, dt * object.get.movement.normalize())
+  object.set(GameObject(newHitbox, Vec2d(0.0, 0.0)))
+}
+
+def move(drawable: Drawable, dVec: Vec2d): Drawable = drawable match {
+  case Rect(pos, w, h, c) => Rect(pos + dVec, w, h, c)
+  case Circle(pos, r, c) => Circle(pos + dVec, r, c)
 }
 
 type Event = String
@@ -59,15 +67,11 @@ type Event = String
 def main(): Unit = {
   val PLAYER_WIDTH = 100
   val PLAYER_HEIGHT = 100
-  val player = ref[Drawable](Rect(150.0, 100.0, PLAYER_WIDTH, PLAYER_HEIGHT, Green()))
+  val PLAYER_SPEED = 100
+  val player = ref[GameObject](
+    GameObject(Rect(Vec2d(150.0, 100.0), PLAYER_WIDTH, PLAYER_HEIGHT, Green()), Vec2d(0.0, 0.0))
+  )
   val now = ref[Int](getTime())
-
-  def render(deadline: IdleDeadline): Unit = {
-    with canvas;
-    do clear()
-    do draw(player.get)
-    requestIdleCallback(render)
-  }
 
   def calcDt(): Int = {
     val timeElapsed = getTime() - now.get()
@@ -75,17 +79,27 @@ def main(): Unit = {
     timeElapsed
   }
 
-  def eventHandler(event: Event): Unit = event match {
-    case "w" => {
-      val dt: Int = calcDt()
-      val dtToDouble: Double = dt.toDouble
-      player.set(move(player.get, 0.0, -1.0 * dtToDouble / 10.0))
-    }
-    case "a" =>
-      with canvas; 
-      do draw(Rect(300.0, 100.0, 150, 100, Red())) 
-    case  _  => ()
+  def render(deadline: IdleDeadline): Unit = {
+    val dt = calcDt()
+    player.move(dt)
+    with canvas;
+    do clear()
+    do draw(player.get)
+    requestIdleCallback(render)
   }
+
+  def eventHandler(event: Event): Unit = {
+    val phb = player.get.hitbox
+    val pm = player.get.movement
+    event match {
+      case "w" => player.set(GameObject(phb, Vec2d(pm.x, -1.0)))
+      case "a" => player.set(GameObject(phb, Vec2d(-1.0, pm.y)))
+      case "s" => player.set(GameObject(phb, Vec2d(pm.x, 1.0)))
+      case "d" => player.set(GameObject(phb, Vec2d(1.0, pm.y)))
+      case  _  => () 
+    }
+  }
+
   addEventListener(KEY_DOWN, eventHandler)
   requestIdleCallback(render)
 }

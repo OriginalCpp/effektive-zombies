@@ -1,6 +1,7 @@
 module main
 
 import src/ffi
+import src/map
 
 val KEY_DOWN = "keydown"
 val KEY_UP = "keyup"
@@ -22,7 +23,13 @@ type Drawable {
   Circle(pos: Vec2d, radius: Int, color: Color)
 }
 
-record GameObject(hitbox: Drawable, movement: Vec2d)
+type GameObject {
+  Player(hitbox: Drawable)
+}
+
+def getHitbox(object: GameObject): Drawable = object match {
+  case Player(hitbox) => hitbox
+}
 
 interface Canvas {
   def get(): Node
@@ -37,7 +44,7 @@ def canvas[T] { function: () => T / {Canvas} }: T = {
     def get = resume(getElementById("canvas").getOrElse { createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT) })
     def draw(object) = {
       canvas { 
-        object.hitbox match {
+        object.getHitbox() match {
           case Rect(pos, width, height, color) => 
             drawRect(do get(), pos.x, pos.y, width, height, color.toString())
           case _ => ()
@@ -52,11 +59,6 @@ def canvas[T] { function: () => T / {Canvas} }: T = {
   }
 }
 
-def move(object: Ref[GameObject], dt: Int): Unit = {
-  val newHitbox = move(object.get.hitbox, dt * object.get.movement.normalize())
-  object.set(GameObject(newHitbox, Vec2d(0.0, 0.0)))
-}
-
 def move(drawable: Drawable, dVec: Vec2d): Drawable = drawable match {
   case Rect(pos, w, h, c) => Rect(pos + dVec, w, h, c)
   case Circle(pos, r, c) => Circle(pos + dVec, r, c)
@@ -67,11 +69,28 @@ type Event = String
 def main(): Unit = {
   val PLAYER_WIDTH = 100
   val PLAYER_HEIGHT = 100
-  val PLAYER_SPEED = 100
+  val PLAYER_SPEED = 0.4
+  val keysPressed = emptyMap[String, Bool]()
   val player = ref[GameObject](
-    GameObject(Rect(Vec2d(150.0, 100.0), PLAYER_WIDTH, PLAYER_HEIGHT, Green()), Vec2d(0.0, 0.0))
+    Player(Rect(Vec2d(150.0, 100.0), PLAYER_WIDTH, PLAYER_HEIGHT, Green()))
   )
   val now = ref[Int](getTime())
+
+  def getAxisMovement(minusKey: String, plusKey: String): Double = {
+    val minus: Double = keysPressed.map::get(minusKey).getOrElse{false}.toDouble()
+    val plus: Double = keysPressed.map::get(plusKey).getOrElse{false}.toDouble()
+    -1.0 * minus + plus
+  }
+
+  def assemblePlayerMovement(): Vec2d = {
+    val x = getAxisMovement("a", "d")
+    val y = getAxisMovement("w", "s")
+    normalize(Vec2d(x, y)) * PLAYER_SPEED
+  }
+
+  def move(object: Ref[GameObject], dt: Int): Unit = object.get match {
+    case Player(hitbox) => object.set(Player(hitbox.move(dt * assemblePlayerMovement())))
+  }
 
   def calcDt(): Int = {
     val timeElapsed = getTime() - now.get()
@@ -88,18 +107,10 @@ def main(): Unit = {
     requestIdleCallback(render)
   }
 
-  def eventHandler(event: Event): Unit = {
-    val phb = player.get.hitbox
-    val pm = player.get.movement
-    event match {
-      case "w" => player.set(GameObject(phb, Vec2d(pm.x, -1.0)))
-      case "a" => player.set(GameObject(phb, Vec2d(-1.0, pm.y)))
-      case "s" => player.set(GameObject(phb, Vec2d(pm.x, 1.0)))
-      case "d" => player.set(GameObject(phb, Vec2d(1.0, pm.y)))
-      case  _  => () 
-    }
-  }
+  def pressedHandler(event: Event): Unit = keysPressed.update(event, true)
+  def releasedHandler(event: Event): Unit = keysPressed.update(event, false)
 
-  addEventListener(KEY_DOWN, eventHandler)
+  addEventListener(KEY_DOWN, pressedHandler)
+  addEventListener(KEY_UP, releasedHandler)
   requestIdleCallback(render)
 }

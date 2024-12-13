@@ -9,9 +9,16 @@ def normalize(vec: Vec2d): Vec2d = {
   if (length != 0.0) Vec2d(vec.x / length, vec.y / length) else Vec2d(0.0, 0.0)
 }
 
+def infixMul(vec: Vec2d, scalar: Int): Vec2d = scalar * vec
+
 def infixMul(scalar: Int, vec: Vec2d): Vec2d = scalar.toDouble() * vec
 
+def infixMul(vec: Vec2d, scalar: Double) = scalar * vec
+
 def infixMul(scalar: Double, vec: Vec2d): Vec2d = Vec2d(scalar * vec.x, scalar * vec.y)
+
+extern def toDouble(b: Bool): Double = 
+  jsWeb "(function() { if (${b}) { return 1; } else { return 0; }})()"
 
 extern type Node
 

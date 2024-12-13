@@ -19,6 +19,10 @@ def infixMul(vec: Vec2d, scalar: Double) = scalar * vec
 
 def infixMul(scalar: Double, vec: Vec2d): Vec2d = Vec2d(scalar * vec.x, scalar * vec.y)
 
+def equals(vec1: Vec2d, vec2: Vec2d): Bool = (vec1.x == vec2.x) && (vec1.y == vec2.y)
+
+def show(vec: Vec2d) = "Vec2d(" ++ show(vec.x) ++ ", " ++ show(vec.y) ++ ")"
+
 extern def toDouble(b: Bool): Double = 
   jsWeb "(function() { if (${b}) { return 1; } else { return 0; }})()"
 

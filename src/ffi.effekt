@@ -2,11 +2,13 @@ module ffi
 
 record Vec2d(x: Double, y: Double)
 
+val NULL_VECTOR = Vec2d(0.0, 0.0)
+
 def infixAdd(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x + vec2.x, vec1.y + vec2.y)
 
 def normalize(vec: Vec2d): Vec2d = {
   val length = sqrt(vec.x * vec.x + vec.y * vec.y)
-  if (length != 0.0) Vec2d(vec.x / length, vec.y / length) else Vec2d(0.0, 0.0)
+  if (length != 0.0) Vec2d(vec.x / length, vec.y / length) else NULL_VECTOR
 }
 
 def infixMul(vec: Vec2d, scalar: Int): Vec2d = scalar * vec
@@ -35,7 +37,7 @@ extern io def addEventListener(eventType: String, callback: String => Unit at {i
            (event) => $effekt.runToplevel((ks, k) => ${callback}(event.key, ks, k)))"""
 
 
-extern io def createCanvas(width: Int, height: Int): Node =
+extern io def createCanvas(width: Double, height: Double): Node =
   jsWeb """(function(){
   canvas = document.createElement("canvas");
   canvas.setAttribute("id", "canvas")
@@ -63,3 +65,7 @@ extern io def requestIdleCallback(callback: (IdleDeadline) => Unit at {io, globa
   jsWeb "window.requestIdleCallback(deadline => $effekt.runToplevel((ks, k) => ${callback}(deadline, ks, k)))"
 
 extern io def getTime(): Int = jsWeb "Date.now()"
+
+extern io def clientWidth(): Double = jsWeb "document.documentElement.clientWidth"
+
+extern io def clientHeight(): Double = jsWeb "document.documentElement.clientHeight"

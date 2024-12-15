@@ -1,6 +1,7 @@
 module main
 
 import src/ffi
+import src/vec2d
 import src/map
 
 val KEY_DOWN = "keydown"
@@ -11,11 +12,13 @@ val DEFAULT_CANVAS_HEIGHT = 720.0
 type Color {
   Green()
   Red()
+  Black()
 }
 
 def toString(color: Color): String = color match {
   case Green() => "green"
   case Red()   => "red"
+  case Black() => "black"
 }
 
 type Drawable {
@@ -27,6 +30,8 @@ type GameObject {
   Player(hitbox: Drawable)
 }
 
+record Game(player: GameObject)
+
 def getHitbox(object: GameObject): Drawable = object match {
   case Player(hitbox) => hitbox
 }
@@ -34,6 +39,7 @@ def getHitbox(object: GameObject): Drawable = object match {
 interface Canvas {
   def get(): Node
   def draw(object: GameObject): Unit
+  def drawD(drawable: Drawable): Unit
   def clear(): Unit
 }
 
@@ -44,12 +50,14 @@ def canvas[T] { function: () => T / {Canvas} }: T = {
     def get = resume(getElementById("canvas").getOrElse { 
       createCanvas(DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT) 
     })
-    def draw(object) = {
+    def draw(object) = canvas { do drawD(object.getHitbox()); resume(()) }
+    def drawD(drawable) = {
       canvas { 
-        object.getHitbox() match {
+        drawable match {
           case Rect(pos, width, height, color) => 
             drawRect(do get(), pos.x, pos.y, width, height, color.toString())
-          case _ => ()
+          case Circle(pos, radius, color) => 
+            drawCircle(do get(), pos.x, pos.y, radius, color.toString())
         } 
       }
       resume(())
@@ -78,6 +86,19 @@ def assembleMovement(keyMap: Map[String, Bool], speed: Double): Vec2d = {
   normalize(Vec2d(x, y)) * speed
 }
 
+def constructGun(playerHitbox: Drawable): Drawable = {
+  val (playerSize, playerCenter) = playerHitbox match {
+    case Rect(pos, w, h, _) =>
+      (max(w, h).toDouble(), pos + Vec2d((w / 2).toDouble(), (h / 2).toDouble()))
+    case Circle(pos, r, _) => (r.toDouble() * 2.0, pos)
+  }
+  val GUN_WIDTH  = playerSize / 2.0
+  val GUN_HEIGTH = GUN_WIDTH / 3.0
+  val GUN_POS = playerCenter + Vec2d(playerSize * 0.5 - 1.0, -0.5 * GUN_HEIGTH)
+  val GUN = Rect(GUN_POS, GUN_WIDTH.toInt(), GUN_HEIGTH.toInt(), Black())
+  GUN
+}
+
 type Event = String
 
 def main(): Unit = {
@@ -86,14 +107,12 @@ def main(): Unit = {
   val CANVAS_CENTER = Vec2d(CANVAS_WIDTH / 2.0, CANVAS_HEIGHT / 2.0)
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
 
-  val PLAYER_WIDTH = 100
-  val PLAYER_HEIGHT = 100
+  val PLAYER_SIZE = CANVAS_HEIGHT / 15.0
+  val PLAYER_START_POS = CANVAS_CENTER + -0.5 * Vec2d(PLAYER_SIZE, PLAYER_SIZE)
   val PLAYER_SPEED = 0.4
-  val player = Player(
-    Rect(CANVAS_CENTER + -0.5 * Vec2d(PLAYER_WIDTH.toDouble(), PLAYER_HEIGHT.toDouble()), 
-    PLAYER_WIDTH, PLAYER_HEIGHT, Green())
-  )
-  val objects = ref[List[GameObject]]([player])
+  val START_PLAYER = Player(Circle(PLAYER_START_POS, PLAYER_SIZE.toInt(), Green()))
+
+  val game = ref[Game](Game(START_PLAYER))
 
   val keysPressed = emptyMap[String, Bool]()
   val now = ref[Int](getTime())
@@ -111,13 +130,15 @@ def main(): Unit = {
 
   def render(deadline: IdleDeadline): Unit = {
     val dt = calcDt()
-    val objs = objects.get
-    val movedObjs = objs.map { obj => obj.move(dt) }
+    val player = game.get.player
+    val movedPlayer = player.move(dt)
+    val gun = constructGun(movedPlayer.getHitbox())
     canvas {
       do clear()
-      movedObjs.foreach { obj => do draw(obj) }
+      do draw(movedPlayer)
+      do drawD(gun)
     }
-    objects.set(movedObjs)
+    game.set(Game(movedPlayer))
     requestIdleCallback(render)
   }
 

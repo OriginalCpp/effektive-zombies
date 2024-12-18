@@ -6,6 +6,8 @@ val NULL_VECTOR = Vec2d(0.0, 0.0)
 
 def infixAdd(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x + vec2.x, vec1.y + vec2.y)
 
+def infixSub(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x - vec2.x, vec1.y - vec2.y)
+
 def normalize(vec: Vec2d): Vec2d = {
   val length = sqrt(vec.x * vec.x + vec.y * vec.y)
   if (length != 0.0) Vec2d(vec.x / length, vec.y / length) else NULL_VECTOR
@@ -22,3 +24,11 @@ def infixMul(scalar: Double, vec: Vec2d): Vec2d = Vec2d(scalar * vec.x, scalar *
 def equals(vec1: Vec2d, vec2: Vec2d): Bool = (vec1.x == vec2.x) && (vec1.y == vec2.y)
 
 def show(vec: Vec2d) = "Vec2d(" ++ show(vec.x) ++ ", " ++ show(vec.y) ++ ")"
+
+//Calculates the angle of the vector relative to the x-axis, the resulting angle is interpreted like this:
+//if we rotate the x-axis by the returned angle clockwise, it is parallel to the given vector
+def angleClockwise(vec1: Vec2d): Double = {
+  val angle = atan(vec1.y / vec1.x)
+  val clockwise = if (vec1.x < 0.0) PI else 0.0
+  angle + clockwise
+}

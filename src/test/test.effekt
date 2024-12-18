@@ -2,20 +2,41 @@ module test/test
 
 import test
 
-import src/ffi
+import src/vec2d
 
-def main() = {
-  suite("moving") {
+def almostEqual(d1: Double, d2: Double): Bool = (d1 - d2) < 0.001
 
-    test("vector arithmetic") {
-      val v = 2 * (Vec2d(2.0, 3.0) + Vec2d(1.0, -1.0))
-      assertEqual(v, Vec2d(6.0, 4.0))
-    }
+def main(): Unit = mainSuite("") {
+  test("vector arithmetic") {
+    val v = 2 * (Vec2d(2.0, 3.0) + Vec2d(1.0, -1.0))
+    assertEqual(v, Vec2d(6.0, 4.0))
+  }
 
-    test("vector normalizing") {
-      val v = Vec2d(3.0, 4.0)
-      //length = sqrt(9 + 16) = 5
-      assertEqual(normalize(v), Vec2d(0.6, 0.8))
+  test("vector normalizing") {
+    val v = Vec2d(3.0, 4.0)
+    //length = sqrt(9 + 16) = 5
+    assertEqual(normalize(v), Vec2d(0.6, 0.8))
+  }
+
+  test("angles") {
+    val vectors = [
+      Vec2d(1.0, 0.0),
+      Vec2d(1.0, 1.0),
+      Vec2d(0.001, 1.0),
+      Vec2d(-1.0, 1.0),
+      Vec2d(-1.0, 0.0),
+      Vec2d(-1.0, -1.0),
+      Vec2d(0.001, -1.0),
+      Vec2d(1.0, -1.0)
+    ]
+
+    var expectedAngle = 0.0
+    vectors.foreach { v =>
+      val calculatedAngle = angleClockwise(v)  
+      val msg = "angleClockwise(" ++ show(v) ++ ") = " 
+                ++ show(calculatedAngle) ++ " which is not near the expected " ++ show(expectedAngle)
+      assertTrue(almostEqual(calculatedAngle, expectedAngle), msg)
+      expectedAngle = expectedAngle + 0.25 * PI
     }
   }
 }

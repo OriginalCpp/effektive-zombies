@@ -18,14 +18,26 @@ def main(): Unit = mainSuite("") {
     assertEqual(normalize(v), Vec2d(0.6, 0.8))
   }
 
-  test("0° angle") {
-    val angle = angleClockwise(Vec2d(1.0, 0.0))
-    assertEqual(angle, 0.0)
-  }
+  test("angles") {
+    val vectors = [
+      Vec2d(1.0, 0.0),
+      Vec2d(1.0, 1.0),
+      Vec2d(0.001, 1.0),
+      Vec2d(-1.0, 1.0),
+      Vec2d(-1.0, 0.0),
+      Vec2d(-1.0, -1.0),
+      Vec2d(0.001, -1.0),
+      Vec2d(1.0, -1.0)
+    ]
 
-  test("45° angle") {
-    val angle = angleClockwise(Vec2d(1.0, -1.0))
-    assertTrue(almostEqual(angle, 0.25 * PI))
+    var expectedAngle = 0.0
+    vectors.foreach { v =>
+      val calculatedAngle = angleClockwise(v)  
+      val msg = "angleClockwise(" ++ show(v) ++ ") = " 
+                ++ show(calculatedAngle) ++ " which is not near the expected " ++ show(expectedAngle)
+      assertTrue(almostEqual(calculatedAngle, expectedAngle), msg)
+      expectedAngle = expectedAngle + 0.25 * PI
+    }
   }
 }
 

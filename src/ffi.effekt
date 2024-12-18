@@ -13,9 +13,20 @@ def getElementById(id: String): Option[Node] = {
   undefinedToOption(unsafeElement)
 }
 
-extern io def addEventListener(eventType: String, callback: String => Unit at {io, global}): Unit =
+extern type Event
+
+extern io def addEventListener(eventType: String, callback: Event => Unit at {io, global}): Unit =
   jsWeb """document.addEventListener(${eventType}, 
-           (event) => $effekt.runToplevel((ks, k) => ${callback}(event.key, ks, k)))"""
+           (event) => $effekt.runToplevel((ks, k) => ${callback}(event, ks, k)))"""
+
+extern pure def getKey(event: Event): String =
+  jsWeb "${event}.key"
+
+extern io def getClientX(event: Event): Double = 
+  jsWeb "${event}.clientX"
+
+extern io def getClientY(event: Event): Double =
+  jsWeb "${event}.clientY"
 
 
 extern io def createCanvas(width: Double, height: Double): Node =
@@ -29,10 +40,13 @@ extern io def createCanvas(width: Double, height: Double): Node =
   })()
   """
 
-extern io def drawRect(canvas: Node, x: Double, y: Double, width: Int, height: Int, color: String): Unit =
+extern io def drawRect(
+  canvas: Node, x: Double, y: Double, 
+  width: Int, height: Int, color: String
+): Unit =
   jsWeb """ctx = ${canvas}.getContext("2d");
            ctx.fillStyle = ${color}; 
-           ctx.fillRect(${x}, ${y}, ${width}, ${height})"""
+           ctx.fillRect(${x}, ${y}, ${width}, ${height});"""
 
 extern io def drawCircle(canvas: Node, x: Double, y: Double, radius: Int, color: String): Unit =
   jsWeb """ctx = ${canvas}.getContext("2d");
@@ -46,6 +60,24 @@ extern io def clear(canvas: Node): Unit =
            w = ${canvas}.width;
            h = ${canvas}.height;
            ctx.clearRect(0, 0, w, h)"""
+
+//Sets up the transformation matrix to rotate all later drawn shapes clockwise by the given angle 
+//relative to the given coordinates
+extern io def setupRotation(canvas: Node, angle: Double, relativeToX: Double, relativeToY: Double): Unit =
+  jsWeb """ctx = ${canvas}.getContext("2d");
+           ctx.translate(${relativeToX}, ${relativeToY});
+           ctx.rotate(${angle});
+           ctx.translate(-${relativeToX}, -${relativeToY});"""
+
+extern type DOMMatrix
+
+extern io def getTransform(canvas: Node): DOMMatrix = 
+  jsWeb """ctx = ${canvas}.getContext("2d");
+           ctx.getTransform();"""
+
+extern io def setTransform(canvas: Node, matrix: DOMMatrix): Unit =
+  jsWeb """ctx = ${canvas}.getContext("2d");
+           ctx.setTransform(${matrix});"""
 
 extern type IdleDeadline
 

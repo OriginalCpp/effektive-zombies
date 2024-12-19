@@ -4,8 +4,6 @@ import test
 
 import src/vec2d
 
-def almostEqual(d1: Double, d2: Double): Bool = (d1 - d2) < 0.001
-
 def main(): Unit = mainSuite("") {
   test("vector arithmetic") {
     val v = 2 * (Vec2d(2.0, 3.0) + Vec2d(1.0, -1.0))
@@ -37,6 +35,31 @@ def main(): Unit = mainSuite("") {
                 ++ show(calculatedAngle) ++ " which is not near the expected " ++ show(expectedAngle)
       assertTrue(almostEqual(calculatedAngle, expectedAngle), msg)
       expectedAngle = expectedAngle + 0.25 * PI
+    }
+
+    test("rotating") {
+      val expected = Vec2d(1.0, 0.0)
+
+      val vectors = [
+        expected,
+        Vec2d(1.0, 1.0),
+        Vec2d(0.001, 1.0),
+        Vec2d(-1.0, 1.0),
+        Vec2d(-1.0, 0.0),
+        Vec2d(-1.0, -1.0),
+        Vec2d(0.001, -1.0),
+        Vec2d(1.0, -1.0)
+      ].map { v => v.normalize() }
+
+      var rotationAngle = 0.0
+
+      vectors.foreach { v =>
+        val calculated = v.rotate(rotationAngle)
+        val msg = show(v) ++ ".rotate(" ++ show(rotationAngle) ++ ") = " 
+                  ++ show(calculated) ++ " which is not the expected " ++ show(expected)
+        assertTrue(v.rotate(rotationAngle) == expected, msg)
+        rotationAngle = rotationAngle - 0.25 * PI 
+      }
     }
   }
 }

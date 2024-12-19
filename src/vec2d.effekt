@@ -21,7 +21,9 @@ def infixMul(vec: Vec2d, scalar: Double) = scalar * vec
 
 def infixMul(scalar: Double, vec: Vec2d): Vec2d = Vec2d(scalar * vec.x, scalar * vec.y)
 
-def equals(vec1: Vec2d, vec2: Vec2d): Bool = (vec1.x == vec2.x) && (vec1.y == vec2.y)
+def almostEqual(d1: Double, d2: Double): Bool = (d1 - d2) < 0.001
+
+def infixEq(vec1: Vec2d, vec2: Vec2d): Bool = vec1.x.almostEqual(vec2.x) && vec1.y.almostEqual(vec2.y)
 
 def show(vec: Vec2d) = "Vec2d(" ++ show(vec.x) ++ ", " ++ show(vec.y) ++ ")"
 
@@ -43,6 +45,6 @@ def rotate(toRotate: Vec2d, angle: Double): Vec2d = {
   val sinCW = sin(angle)
   val cosCW = cos(angle)
   val rotatedX = cosCW * toRotate.x - sinCW * toRotate.y
-  val rotatedY = sinCW * toRotate.x - cosCW * toRotate.y
+  val rotatedY = sinCW * toRotate.x + cosCW * toRotate.y
   Vec2d(rotatedX, rotatedY)
 }

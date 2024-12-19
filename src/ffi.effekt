@@ -1,7 +1,7 @@
 module ffi
 
 extern def toDouble(b: Bool): Double = 
-  jsWeb "(function() { if (${b}) { return 1; } else { return 0; }})()"
+  js "(function() { if (${b}) { return 1; } else { return 0; }})()"
 
 extern type Node
 

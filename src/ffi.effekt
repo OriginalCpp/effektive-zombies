@@ -28,6 +28,9 @@ extern io def getClientX(event: Event): Double =
 extern io def getClientY(event: Event): Double =
   jsWeb "${event}.clientY"
 
+extern io def getButton(event: Event): Int =
+  jsWeb "${event}.button"
+
 
 extern io def createCanvas(width: Double, height: Double): Node =
   jsWeb """(function(){

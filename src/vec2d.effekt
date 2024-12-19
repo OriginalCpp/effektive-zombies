@@ -36,3 +36,13 @@ def angleClockwise(vec1: Vec2d): Double = {
     angle + clockwise
   } else { if (vec1.y < 0.0) 1.5 * PI else 0.5 * PI }
 }
+
+//rotates the given vector clockwise by the given angle, relative to the origin
+// https://matthew-brett.github.io/teaching/rotation_2d.html  
+def rotate(toRotate: Vec2d, angle: Double): Vec2d = {
+  val sinCW = sin(angle)
+  val cosCW = cos(angle)
+  val rotatedX = cosCW * toRotate.x - sinCW * toRotate.y
+  val rotatedY = sinCW * toRotate.x - cosCW * toRotate.y
+  Vec2d(rotatedX, rotatedY)
+}

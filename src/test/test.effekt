@@ -32,10 +32,8 @@ def main(): Unit = mainSuite("") {
 
     var expectedAngle = 0.0
     vectors.foreach { v =>
-      val calculatedAngle = angleClockwise(v)  
-      val msg = "angleClockwise(" ++ show(v) ++ ") = " 
-                ++ show(calculatedAngle) ++ " which is not near the expected " ++ show(expectedAngle)
-      assertTrue(almostEqual(calculatedAngle, expectedAngle), msg)
+      assertEqual(angleClockwise(v), expectedAngle) 
+        { (d1, d2) => almostEqual(d1, d2, 0.001) } { d => genericShow[Double](d) }
       expectedAngle = expectedAngle + 0.25 * PI
     }
   }
@@ -57,10 +55,8 @@ def main(): Unit = mainSuite("") {
     var rotationAngle = 0.0
 
     vectors.foreach { v =>
-      val calculated = v.rotate(rotationAngle)
-      val msg = show(v) ++ ".rotate(" ++ show(rotationAngle) ++ ") = " 
-                ++ show(calculated) ++ " which is not the expected " ++ show(expected)
-      assertTrue(calculated == expected, msg)
+      assertEqual(v.rotate(rotationAngle), expected) 
+        { vec2d::infixEq } { vec2d::show }
       rotationAngle = rotationAngle - 0.25 * PI 
     }
   }
@@ -81,11 +77,54 @@ def main(): Unit = mainSuite("") {
     keyMap.update("a", true)
     assertV(Vec2d(-1.0, 0.0))
     keyMap.update("w", false)
-    assertV(Vec2d(-1.0 / sqrt(2), 1.0 / sqrt(2)))
+    assertV(Vec2d(-1.0 / sqrt(2.0), 1.0 / sqrt(2.0)))
     keyMap.update("s", false)
     assertV(Vec2d(-1.0, 0.0))
     keyMap.update("d", true)
     assertV(NULL_VECTOR)
+  }
+
+  test("Circle AABB") {
+    val circle = Circle(Vec2d(5.0, 5.0), 3, Red())
+    val expectedAABB = AABB(Vec2d(2.0, 2.0), Vec2d(8.0, 8.0))
+    val actual = circle.getAABB()
+    assertEqual(actual, expectedAABB)
+  }
+
+  //This test has a small chance to fail
+  test("side choosing") {
+    val width = 5.0
+    val height = 3.0
+    val rightProb = 0.1875
+    val leftProb = rightProb
+    val topProb = 0.3125
+    val bottomProb = topProb
+
+    var n = 100000
+    val size = n.toDouble()
+    var rCount = 0.0
+    var bCount = 0.0
+    var lCount = 0.0
+    var tCount = 0.0
+    while(n != 0) {
+      chooseSide(height.toInt(), width.toInt()) match {
+        case Right() => rCount = rCount + 1.0
+        case Bottom() => bCount = bCount + 1.0
+        case Left() => lCount = lCount + 1.0
+        case Top() => tCount = tCount + 1.0
+      }
+      n = n - 1
+    }
+
+    def assertProb(name: String, actual: Double, expected: Double) = {
+      val msg = "Probability of " ++ name ++ " is " ++ show(actual)
+                ++ " instead of the expected " ++ show(expected)
+      assertTrue(almostEqual(actual, expected, 0.01), msg)
+    }
+    assertProb("Right", rCount / size, rightProb)
+    assertProb("Bottom", bCount / size, bottomProb)
+    assertProb("Left", lCount / size, leftProb)
+    assertProb("Top", tCount / size, topProb)
   }
 }
 

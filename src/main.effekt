@@ -94,7 +94,7 @@ type Side {
 
 def chooseSide(leftRightSize: Int, topBottomSize: Int): Side = {
   val leftProbability = 
-    leftRightSize.toDouble() / (leftRightSize + 2 * topBottomSize).toDouble()
+    leftRightSize.toDouble() / (2 * leftRightSize + 2 * topBottomSize).toDouble()
   val rightThreshold = leftProbability
   val topThreshold = 2.0 * rightThreshold
   val bottomThreshold = (1.0 - topThreshold) / 2.0 + topThreshold
@@ -121,8 +121,7 @@ def spawnZombie(game: Game): Game = {
   }
   val playerAABB = game.player.hitbox.getAABB()
   val AABBSizes = playerAABB.upperLeft - playerAABB.lowerRight
-  //w * h = pi * r^2, so:
-  val zombieSize = sqrt(AABBSizes.x * AABBSizes.y / 2.0).toInt()
+  val zombieSize = (max(AABBSizes.x, AABBSizes.y) / 2.0).toInt()
   val zombie = Zombie(Circle(zombiePos, zombieSize, Black()), Vec2d(1.0, 0.0))
   game.addObject(zombie)
 }

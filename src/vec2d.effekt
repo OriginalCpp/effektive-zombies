@@ -4,12 +4,16 @@ record Vec2d(x: Double, y: Double)
 
 val NULL_VECTOR = Vec2d(0.0, 0.0)
 
+def fromInt(x: Int, y: Int): Vec2d = Vec2d(x.toDouble(), y.toDouble())
+
 def infixAdd(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x + vec2.x, vec1.y + vec2.y)
 
 def infixSub(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x - vec2.x, vec1.y - vec2.y)
 
+def length(vec: Vec2d): Double = sqrt(vec.x * vec.x + vec.y * vec.y)
+
 def normalize(vec: Vec2d): Vec2d = {
-  val length = sqrt(vec.x * vec.x + vec.y * vec.y)
+  val length = vec.length()
   if (length != 0.0) Vec2d(vec.x / length, vec.y / length) else NULL_VECTOR
 }
 
@@ -21,9 +25,10 @@ def infixMul(vec: Vec2d, scalar: Double) = scalar * vec
 
 def infixMul(scalar: Double, vec: Vec2d): Vec2d = Vec2d(scalar * vec.x, scalar * vec.y)
 
-def almostEqual(d1: Double, d2: Double): Bool = (d1 - d2) < 0.001
+def almostEqual(d1: Double, d2: Double, epsilon: Double): Bool = (d1 - d2) < epsilon
 
-def infixEq(vec1: Vec2d, vec2: Vec2d): Bool = vec1.x.almostEqual(vec2.x) && vec1.y.almostEqual(vec2.y)
+def infixEq(vec1: Vec2d, vec2: Vec2d): Bool = 
+  vec1.x.almostEqual(vec2.x, 0.001) && vec1.y.almostEqual(vec2.y, 0.001)
 
 def show(vec: Vec2d) = "Vec2d(" ++ show(vec.x) ++ ", " ++ show(vec.y) ++ ")"
 

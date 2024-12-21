@@ -81,6 +81,7 @@ def main(): Unit = mainSuite("") {
     keyMap.update("a", true)
     assertV(Vec2d(-1.0, 0.0))
     keyMap.update("w", false)
+    assertV(Vec2d(-1.0 / sqrt(2), 1.0 / sqrt(2)))
     keyMap.update("s", false)
     assertV(Vec2d(-1.0, 0.0))
     keyMap.update("d", true)

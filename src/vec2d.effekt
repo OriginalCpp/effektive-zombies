@@ -4,6 +4,8 @@ record Vec2d(x: Double, y: Double)
 
 val NULL_VECTOR = Vec2d(0.0, 0.0)
 
+def fromInt(x: Int, y: Int): Vec2d = Vec2d(x.toDouble(), y.toDouble())
+
 def infixAdd(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x + vec2.x, vec1.y + vec2.y)
 
 def infixSub(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x - vec2.x, vec1.y - vec2.y)

@@ -26,12 +26,51 @@ def toString(color: Color): String = color match {
 type SimpleDrawable {
   Rect(upperLeft: Vec2d, width: Int, height: Int, color: Color)
   Circle(pos: Vec2d, radius: Int, color: Color)
-} 
+}
+
+def show(d: SimpleDrawable): String = d match {
+  case Rect(uL, w, h, c) => 
+    "Rect(" ++ [show(uL), show(w), show(h), c.toString()].mkString(", ") ++ ")"
+  case Circle(pos, radius, color) =>
+    "Circle(" ++ [show(pos), show(radius), color.toString()].mkString(", ") ++ ")"
+}
+
+def mkString(list: List[String], delim: String): String = list match {
+  case Nil() => "" 
+  case Cons(head, tail) => 
+    def go(list: List[String]): String = list match {
+      case Nil() => ""
+      case Cons(head, tail) => delim ++ head ++ go(tail)
+    } 
+    head ++ go(tail)
+}
 
 type ManipulatedDrawable {
   Simple(drawable: SimpleDrawable)
-  Rotate(inner: ManipulatedDrawable, rotation: Double, relativeTo: Vec2d)
+  Rotate(inner: ManipulatedDrawable, rotation: Double, relativeTo: Option[Vec2d])
   Compose(first: ManipulatedDrawable, second: ManipulatedDrawable)
+}
+
+def collapse(d: ManipulatedDrawable): ManipulatedDrawable = d match {
+  case Rotate(Rotate(inner, innerRotation, innerRelative), rotation, relativeTo) =>
+    if (innerRelative.equals(relativeTo)) 
+      Rotate(inner, innerRotation + rotation, relativeTo)
+    else 
+      Rotate(
+        Rotate(inner, innerRotation, innerRelative).collapse(), 
+        rotation, relativeTo
+      )
+  case _ => d
+}
+
+def show(d: ManipulatedDrawable): String = d match {
+  case Simple(inner) => "Simple(" ++ show(inner) ++ ")"
+  case Rotate(inner, rotation, relativeTo) =>
+    "Rotate(" ++ 
+      [show(inner), show(rotation), show(relativeTo) { vec2d::show }].mkString(", ") 
+    ++ ")"
+  case Compose(first, second) =>
+    "Compose(" ++ show(first) ++ ", " ++ show(second) ++ ")"
 }
 
 def changeColor(drawable: SimpleDrawable, to: Color): SimpleDrawable = drawable match {
@@ -47,7 +86,10 @@ def getCenter(drawable: SimpleDrawable): Vec2d = drawable match {
 
 def getCenter(drawable: ManipulatedDrawable): Vec2d = drawable match {
   case Simple(inner) => inner.getCenter()
-  case Rotate(inner, rotation, relativeTo) => rotate(inner.getCenter() - relativeTo, rotation)
+  case Rotate(inner, rotation, relativeTo) =>
+    val innerCenter = inner.getCenter()
+    val relat = relativeTo.getOrElse { () => innerCenter }
+    innerCenter + rotate(innerCenter - relat, rotation)
   case Compose(first, second) => first.getCenter()
 }
 
@@ -63,7 +105,7 @@ def getAABB(drawable: SimpleDrawable): AABB = drawable match {
 
 type GameObject {
   Shot(hitbox: ManipulatedDrawable, movementVector: Vec2d)
-  Zombie(hitbox: SimpleDrawable, movementVector: Vec2d)
+  Zombie(hitbox: ManipulatedDrawable, movementVector: Vec2d)
 }
 
 def getCenter(object: GameObject): Vec2d = object match {
@@ -73,7 +115,7 @@ def getCenter(object: GameObject): Vec2d = object match {
 
 def getHitbox(object: GameObject): ManipulatedDrawable = object match {
   case Shot(hitbox, _) => hitbox
-  case Zombie(hitbox, _) => Simple(hitbox)
+  case Zombie(hitbox, _) => hitbox
 }
 
 record Window(width: Int, height: Int)
@@ -120,9 +162,9 @@ def spawnZombie(game: Game): Game = {
     case Top() => Vec2d(r * dW, 0.0)
   }
   val playerAABB = game.player.hitbox.getAABB()
-  val AABBSizes = playerAABB.upperLeft - playerAABB.lowerRight
+  val AABBSizes = playerAABB.lowerRight - playerAABB.upperLeft
   val zombieSize = (max(AABBSizes.x, AABBSizes.y) / 2.0).toInt()
-  val zombie = Zombie(Circle(zombiePos, zombieSize, Black()), Vec2d(1.0, 0.0))
+  val zombie = Zombie(Simple(Circle(zombiePos, zombieSize, Black())), Vec2d(0.3, 0.0))
   game.addObject(zombie)
 }
 
@@ -158,7 +200,8 @@ def canvas[T] { function: () => T / {Canvas} }: T = {
           case Rotate(inner, rotation, relativeTo) =>
             val canvas = do get()
             val oldMatrix = canvas.getTransform()
-            canvas.setupRotation(rotation, relativeTo.x, relativeTo.y)
+            val realRelative = relativeTo.getOrElse { inner.getCenter() }
+            canvas.setupRotation(rotation, realRelative.x, realRelative.y)
             do draw(inner)
             canvas.setTransform(oldMatrix)
           case Compose(first, second) =>
@@ -183,7 +226,7 @@ def move(drawable: SimpleDrawable, dVec: Vec2d): SimpleDrawable = drawable match
 def move(drawable: ManipulatedDrawable, dVec: Vec2d): ManipulatedDrawable = drawable match {
   case Simple(inner) => Simple(inner.move(dVec))
   case Rotate(inner, angle, relativeTo) => 
-    Rotate(inner.move(dVec), angle, relativeTo + dVec)
+    Rotate(inner.move(dVec), angle, relativeTo.map{v => v + dVec})
   case Compose(first, second) => Compose(first.move(dVec), second.move(dVec))
 }
 
@@ -248,12 +291,24 @@ def main(): Unit = {
     val dt = calcDt()
     val player = game.get.player
     val movedPlayer = player.move(dt)
-    val movedObjects = game.get.objects.map { o => o.move(dt) }
+    val movedObjects = game.get.objects.map {
+      case Zombie(h, m) =>
+        val zombieCenter = h.getCenter()
+        val zombiePlayerVec = player.hitbox.getCenter() - zombieCenter
+        val missingAngle = angleClockwise(zombiePlayerVec) - angleClockwise(m)
+        val newHitbox = Rotate(h, missingAngle, None()).collapse()
+        Zombie(newHitbox, m.rotate(missingAngle)).move(dt)
+      case o => o.move(dt)
+    }
     val movedPlayerCenter = movedPlayer.hitbox.getCenter()
     val gunAngle = angleClockwise(mousePos.get - movedPlayerCenter)
     canvas {
       do clear()
-      do draw(Rotate(Compose(Simple(movedPlayer.hitbox), Simple(movedPlayer.gun)), gunAngle, movedPlayerCenter))
+      do draw(Rotate(
+        Compose(Simple(movedPlayer.hitbox), 
+        Simple(movedPlayer.gun)), 
+        gunAngle, None()
+      ))
       movedObjects.foreach { o => do draw(o.getHitbox()) }
     }
     game.set(Game(game.get.window, movedPlayer, movedObjects))
@@ -276,7 +331,7 @@ def main(): Unit = {
       val gunAngle = angleClockwise(mousePos.get - playerCenter)
       val shotDrawable = player.gun.changeColor(Black())
       val shot = Shot(
-        Rotate(Simple(shotDrawable), gunAngle, playerCenter),
+        Rotate(Simple(shotDrawable), gunAngle, Some(playerCenter)),
         Vec2d(1.0, 0.0).rotate(gunAngle)
       )
       game.set(game.get.addObject(shot))

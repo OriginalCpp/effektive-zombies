@@ -167,7 +167,7 @@ def getCenter(drawable: ManipulatedDrawable): Vec2d = drawable match {
   case Rotate(inner, rotation, relativeTo) =>
     val innerCenter = inner.getCenter()
     val relat = relativeTo.getOrElse { () => innerCenter }
-    innerCenter + rotate(innerCenter - relat, rotation)
+    innerCenter.rotate(rotation, relat)
   case Compose(first, second) => first.getCenter()
 }
 

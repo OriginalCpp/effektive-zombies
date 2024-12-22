@@ -1,13 +1,14 @@
 module test/test
 
 import test
+import process
 
 import src/vec2d
 import mutable/map
 import src/main
 
 def main(): Unit = mainSuite("") {
-
+  val testResults = [
   suite("Vec2d") {
     test("vector arithmetic") {
       val v = 2 * (Vec2d(2.0, 3.0) + Vec2d(1.0, -1.0))
@@ -19,7 +20,7 @@ def main(): Unit = mainSuite("") {
       //length = sqrt(9 + 16) = 5
       assertEqual(normalize(v), Vec2d(0.6, 0.8))
     }
-  }
+  },
 
   suite("rotations") {
     test("angle calculation") {
@@ -64,7 +65,7 @@ def main(): Unit = mainSuite("") {
         rotationAngle = rotationAngle - 0.25 * PI 
       }
     }
-  }
+  },
 
   suite("collapse rotations") {
     val inner = Simple(Circle(fromInt(1, 1), 1, Red()))
@@ -124,7 +125,7 @@ def main(): Unit = mainSuite("") {
 
       assertEqual(complexCollapse.collapseRotations(), complexCollapseExpected)
     }
-  }
+  },
 
   suite("getCenter") {
     test("same center after rotating around ones own center") {
@@ -136,7 +137,18 @@ def main(): Unit = mainSuite("") {
       assertEqual(rect.getCenter(), rectPointingUp.getCenter()) 
         { vec2d::infixEq } { vec2d::show }
     }
-  }
+
+    test("rectangle-hitbox center") {
+      val rect = HRect(
+        fromInt(1, 1), fromInt(4, 2), 
+        Vec2d(4.0 - 2.0 / 3.0, 4.0), Vec2d(1.0 / 3.0, 3.0) 
+      )
+
+      val expected = Vec2d(2.0 + 1.0 / 6.0, 2.5)
+
+      assertEqual(rect.getCenter(), expected) { vec2d::infixEq } { vec2d::show }
+    }
+  },
 
   suite("movement") {
     test("moving rotated shape") {
@@ -175,7 +187,7 @@ def main(): Unit = mainSuite("") {
       keyMap.update("d", true)
       assertV(NULL_VECTOR)
     }
-  }
+  },
 
   suite("other") {
     test("Circle AABB") {
@@ -221,7 +233,9 @@ def main(): Unit = mainSuite("") {
       assertProb("Top", tCount / size, topProb)
     }
   }
-
-  ()
+  ]
+  val allTestsSucceeded = testResults.all { res => res }
+  val exitCode = if (allTestsSucceeded) 0 else 1
+  process::exit(exitCode)
 }
 

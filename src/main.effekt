@@ -17,7 +17,7 @@ type Color {
   Black()
 }
 
-def toString(color: Color): String = color match {
+def show(color: Color): String = color match {
   case Green() => "green"
   case Red()   => "red"
   case Black() => "black"
@@ -114,9 +114,9 @@ def isInside(vec: Vec2d, hitbox: Hitbox): Bool = hitbox match {
 
 def show(d: SimpleDrawable): String = d match {
   case Rect(uL, w, h, c) => 
-    "Rect(" ++ [show(uL), show(w), show(h), c.toString()].mkString(", ") ++ ")"
+    "Rect(" ++ [show(uL), show(w), show(h), show(c)].mkString(", ") ++ ")"
   case Circle(pos, radius, color) =>
-    "Circle(" ++ [show(pos), show(radius), color.toString()].mkString(", ") ++ ")"
+    "Circle(" ++ [show(pos), show(radius), show(color)].mkString(", ") ++ ")"
 }
 
 def mkString(list: List[String], delim: String): String = list match {
@@ -285,9 +285,9 @@ def canvas[T] { function: () => T / {Canvas} }: T = {
       canvas {
         drawable match {
           case Rect(upperLeft, width, height, color) => 
-            drawRect(do get(), upperLeft.x, upperLeft.y, width, height, color.toString())
+            drawRect(do get(), upperLeft.x, upperLeft.y, width, height, show(color))
           case Circle(pos, radius, color) => 
-            drawCircle(do get(), pos.x, pos.y, radius, color.toString())
+            drawCircle(do get(), pos.x, pos.y, radius, show(color))
         }
       }
       resume(())

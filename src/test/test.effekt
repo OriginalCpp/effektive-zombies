@@ -43,7 +43,7 @@ def main(): Unit = mainSuite("") {
       }
     }
 
-    test("rotate") {
+    test("rotate around origin") {
       val expected = Vec2d(1.0, 0.0)
 
       val vectors = [
@@ -64,6 +64,16 @@ def main(): Unit = mainSuite("") {
           { vec2d::infixEq } { vec2d::show }
         rotationAngle = rotationAngle - 0.25 * PI 
       }
+    }
+
+    test("rotate relative") {
+      val toRotate = Vec2d(2.0, 2.0)
+      val angle = PI
+      val relativeTo = Vec2d(1.0, 1.0)
+      val expected = Vec2d(1.0, 2.0)
+
+      assertEqual(toRotate.rotate(angle, relativeTo), expected) 
+        { vec2d::infixEq } { vec2d::show }
     }
   },
 

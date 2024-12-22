@@ -24,14 +24,14 @@ def toString(color: Color): String = color match {
 }
 
 type SimpleDrawable {
-  Rect(upperLeft: Vec2d, width: Int, height: Int, color: Color)
-  Circle(pos: Vec2d, radius: Int, color: Color)
+  Rect(upperLeft: Vec2d, width: Double, height: Double, color: Color)
+  Circle(pos: Vec2d, radius: Double, color: Color)
 }
 
 type Hitbox {
   //c1, c3 and c2, c4 are opposite corners
   HRect(c1: Vec2d, c2: Vec2d, c3: Vec2d, c4: Vec2d)
-  HCircle(pos: Vec2d, radius: Int)
+  HCircle(pos: Vec2d, radius: Double)
   HCompose(h1: Hitbox, h2: Hitbox)
 }
 
@@ -59,22 +59,40 @@ def rotate(h: Hitbox, angle: Double, relativeTo: Option[Vec2d]): Hitbox = {
 
 def toHitbox(d: SimpleDrawable): Hitbox = d match {
   case Rect(uL, w, h, _) => 
-    HRect(uL, uL + fromInt(w, 0), uL + fromInt(w, h), uL + fromInt(0, h))
+    HRect(uL, uL + Vec2d(w, 0.0), uL + Vec2d(w, h), uL + Vec2d(0.0, h))
   case Circle(pos, r, _) => HCircle(pos, r)
 }
 
 def collides(h1: Hitbox, h2: Hitbox): Bool = h1 match {
-  case HRect(c1, c2, c3, c4) =>
-    [c1, c2, c3, c4].any { p =>
-      p.isInside(h2)
-    }
+  case HRect(c1, c2, c3, c4) => h2 match {
+    case HRect(_, _, _, _) =>
+      [c1, c2, c3, c4].any { p =>
+        p.isInside(h2)
+      }
+    case _ => h2.collides(h1)
+  }
+  //https://stackoverflow.com/a/402019/15982248
+  //https://stackoverflow.com/a/1079478/15982248
   case HCircle(pos, r) => h2 match {
     case HRect(c1, c2, c3, c4) =>
-      [c1, c2, c3, c4].any { p =>
-        p.isInside(h1)
-    }
+      def isInside(edge: (Vec2d, Vec2d)): Bool = {
+        val (start, end) = edge
+        val edgeV = end - start
+        val centerV = pos - start
+        val angle = angleClockwise(edgeV) - angleClockwise(centerV)
+        val projected = centerV.rotate(angle)
+        length(projected - centerV) < r
+      }
+
+      val edges = [
+        (c1, c2),
+        (c2, c3),
+        (c3, c4),
+        (c4, c1)
+      ]
+      edges.any { e => e.isInside() } || pos.isInside(h2)
     case HCircle(pos2, r2) =>
-      length(pos - pos2) < max(r, r2).toDouble()
+      length(pos - pos2) < max(r, r2)
     case HCompose(first, second) =>
       collides(h1, first) || collides(h1, second)
   }
@@ -85,12 +103,12 @@ def collides(h1: Hitbox, h2: Hitbox): Bool = h1 match {
 def isInside(vec: Vec2d, hitbox: Hitbox): Bool = hitbox match {
   case HRect(c1, c2, c3, c4) =>
     //make rect axis aligned and c1 the upperLeft corner
-    val angle = (c1 - c2).angleClockwise()
-    val uL = c1.rotate(angle, NULL_VECTOR)
-    val lR = c3.rotate(angle, NULL_VECTOR)
+    val angle = (c2 - c1).angleClockwise().neg()
+    val upperLeft = c1.rotate(angle, NULL_VECTOR)
+    val lowerRight = c3.rotate(angle, NULL_VECTOR)
     val rotatedPoint = vec.rotate(angle, NULL_VECTOR)
-    (rotatedPoint > uL) && (rotatedPoint < lR)
-  case HCircle(pos, r) => length(vec - pos) < r.toDouble()
+    (rotatedPoint > upperLeft) && (rotatedPoint < lowerRight)
+  case HCircle(pos, r) => length(vec - pos) < r
   case HCompose(h1, h2) => vec.isInside(h1) || vec.isInside(h2)
 }
 
@@ -158,7 +176,7 @@ def changeColor(drawable: SimpleDrawable, to: Color): SimpleDrawable = drawable 
 
 def getCenter(drawable: SimpleDrawable): Vec2d = drawable match {
   case Rect(upperLeft, width, height, _) => 
-    upperLeft + Vec2d(0.5 * width.toDouble(), 0.5 * height.toDouble())
+    upperLeft + Vec2d(0.5 * width, 0.5 * height)
   case Circle(pos, _, _) => pos
 }
 
@@ -178,9 +196,9 @@ record AABB(upperLeft: Vec2d, lowerRight: Vec2d)
 
 def getAABB(drawable: SimpleDrawable): AABB = drawable match {
   case Rect(uL, width, height, _) => 
-    AABB(uL, uL + fromInt(width, height))
+    AABB(uL, uL + Vec2d(width, height))
   case Circle(center, radius, _) =>
-    val shift = fromInt(radius, radius) 
+    val shift = Vec2d(radius, radius) 
     AABB(center - shift, center + shift)
 }
 
@@ -244,7 +262,7 @@ def spawnZombie(game: Game): Game = {
   }
   val playerAABB = game.player.drawable.getAABB()
   val AABBSizes = playerAABB.lowerRight - playerAABB.upperLeft
-  val zombieSize = (max(AABBSizes.x, AABBSizes.y) / 2.0).toInt()
+  val zombieSize = max(AABBSizes.x, AABBSizes.y) / 2.0
   val zombie = Zombie(Simple(Circle(zombiePos, zombieSize, Black())), Vec2d(0.3, 0.0))
   game.addObject(zombie)
 }
@@ -340,12 +358,12 @@ def main(): Unit = {
   val PLAYER_SIZE = CANVAS_HEIGHT / 15.0
   val PLAYER_SPEED = 0.4
   val PLAYER_START_POS = CANVAS_CENTER
-  val PLAYER_HITBOX = Circle(PLAYER_START_POS, PLAYER_SIZE.toInt(), Green())
+  val PLAYER_HITBOX = Circle(PLAYER_START_POS, PLAYER_SIZE, Green())
 
   val GUN_WIDTH  = PLAYER_SIZE / 1.2
   val GUN_HEIGTH = GUN_WIDTH / 3.0
   val GUN_START_POS = PLAYER_START_POS + Vec2d(PLAYER_SIZE - 1.0, -0.5 * GUN_HEIGTH)
-  val GUN = Rect(GUN_START_POS, GUN_WIDTH.toInt(), GUN_HEIGTH.toInt(), Black())
+  val GUN = Rect(GUN_START_POS, GUN_WIDTH, GUN_HEIGTH, Black())
 
   val START_PLAYER = Player(PLAYER_HITBOX, GUN)
 

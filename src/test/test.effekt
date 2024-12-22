@@ -78,7 +78,7 @@ def main(): Unit = mainSuite("") {
   },
 
   suite("collapse rotations") {
-    val inner = Simple(Circle(fromInt(1, 1), 1, Red()))
+    val inner = Simple(Circle(fromInt(1, 1), 1.0, Red()))
 
     test("simpleCollapse") {
       val simpleCollapse = Rotate(
@@ -139,7 +139,7 @@ def main(): Unit = mainSuite("") {
 
   suite("getCenter") {
     test("same center after rotating around ones own center") {
-      val rect = Rect(Vec2d(10.0, 10.0), 10, 5, Red())
+      val rect = Rect(Vec2d(10.0, 10.0), 10.0, 5.0, Red())
       val rectPointingUp = Rotate(
         Simple(rect), 
         0.5 * PI, None()
@@ -162,14 +162,14 @@ def main(): Unit = mainSuite("") {
 
   suite("movement") {
     test("moving rotated shape") {
-      val rect = Rect(Vec2d(10.0, 10.0), 10, 5, Red())
+      val rect = Rect(Vec2d(10.0, 10.0), 10.0, 5.0, Red())
       val rectPointingUp = Rotate(
         Simple(rect), 
         0.5 * PI, None()
       )
       val movedRect = rectPointingUp.move(Vec2d(5.0, 5.0))
       val expected = Rotate(
-        Simple(Rect(Vec2d(15.0, 15.0), 10, 5, Red())),
+        Simple(Rect(Vec2d(15.0, 15.0), 10.0, 5.0, Red())),
         0.5 * PI, None()
       )
       assertEqual(movedRect, expected)
@@ -199,9 +199,46 @@ def main(): Unit = mainSuite("") {
     }
   },
 
+  suite("collision") {
+    test("point inside") {
+      val point = Vec2d(0.0, -1.0)
+      val hitbox = Rect(NULL_VECTOR, 3.0, 2.0, Red()).toHitbox()
+        .rotate(1.25 * PI, Some(NULL_VECTOR))
+      val msg = "Point " ++ show(point) ++ " should be inside " ++ genericShow(hitbox)
+      assertTrue(point.isInside(hitbox), msg)
+    }
+    
+    test("point outside") {
+      val point = Vec2d(0.0, 0.0)
+      val hitbox = HCompose(
+        HCircle(Vec2d(-2.0, -2.0), 1.5),
+        HCircle(Vec2d(2.0, 2.0), 1.5)
+      )
+      
+      val msg = "Point " ++ show(point) 
+                ++ " should not be inside " ++ genericShow(hitbox)
+      assertFalse(point.isInside(hitbox), msg)
+    }
+
+    test("hitbox collision") {
+      val rectHitbox = HRect(
+        Vec2d(0.0, 0.0),
+        Vec2d(1.0, -2.0),
+        Vec2d(-2.0, -5.0),
+        Vec2d(-4.0, -3.0)
+      )
+      val circleHitbox = HCircle(
+        Vec2d(0.0, -4.0),
+        1.0
+      )
+
+      assertTrue(rectHitbox.collides(circleHitbox))
+    }
+  },
+
   suite("other") {
     test("Circle AABB") {
-      val circle = Circle(Vec2d(5.0, 5.0), 3, Red())
+      val circle = Circle(Vec2d(5.0, 5.0), 3.0, Red())
       val expectedAABB = AABB(Vec2d(2.0, 2.0), Vec2d(8.0, 8.0))
       val actual = circle.getAABB()
       assertEqual(actual, expectedAABB)

@@ -3,9 +3,12 @@ module test/test
 import test
 import process
 
-import src/vec2d
 import mutable/map
+import src/shapes/hitbox
+import src/shapes/manipulated
+import src/shapes/simple
 import src/main
+import src/vec2d
 
 def main(): Unit = mainSuite("") {
   val testResults = [

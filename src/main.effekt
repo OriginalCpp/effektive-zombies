@@ -1,8 +1,11 @@
 module main
 
+import mutable/map
+import src/shapes/hitbox
+import src/shapes/manipulated
+import src/shapes/simple
 import src/ffi
 import src/vec2d
-import mutable/map
 
 val KEY_DOWN = "keydown"
 val KEY_UP = "keyup"
@@ -10,187 +13,6 @@ val MOUSE_MOVE = "mousemove"
 val MOUSE_DOWN = "mousedown"
 val DEFAULT_CANVAS_WIDTH = 1280.0
 val DEFAULT_CANVAS_HEIGHT = 720.0
-
-type Color {
-  Green()
-  Red()
-  Black()
-}
-
-def show(color: Color): String = color match {
-  case Green() => "green"
-  case Red()   => "red"
-  case Black() => "black"
-}
-
-type SimpleDrawable {
-  Rect(upperLeft: Vec2d, width: Double, height: Double, color: Color)
-  Circle(pos: Vec2d, radius: Double, color: Color)
-}
-
-type Hitbox {
-  //c1, c3 and c2, c4 are opposite corners
-  HRect(c1: Vec2d, c2: Vec2d, c3: Vec2d, c4: Vec2d)
-  HCircle(pos: Vec2d, radius: Double)
-  HCompose(h1: Hitbox, h2: Hitbox)
-}
-
-def getCenter(h: Hitbox): Vec2d = h match {
-  case HRect(c1, c2, c3, c4) => c1 + (c3 - c1) * 0.5
-  case HCircle(pos, _) => pos
-  case HCompose(h1, h2) => h1.getCenter()
-}
-
-def rotate(h: Hitbox, angle: Double, relativeTo: Option[Vec2d]): Hitbox = {
-  val relat = relativeTo.getOrElse { h.getCenter() }
-  h match {
-    case HRect(c1, c2, c3, c4) =>
-      HRect(
-        c1.rotate(angle, relat), 
-        c2.rotate(angle, relat),
-        c3.rotate(angle, relat),
-        c4.rotate(angle, relat)
-      )
-    case HCircle(pos, radius) => HCircle(pos.rotate(angle, relat), radius)
-    case HCompose(h1, h2) => 
-      HCompose(h1.rotate(angle, relativeTo), h2.rotate(angle, relativeTo))
-  }
-}
-
-def toHitbox(d: SimpleDrawable): Hitbox = d match {
-  case Rect(uL, w, h, _) => 
-    HRect(uL, uL + Vec2d(w, 0.0), uL + Vec2d(w, h), uL + Vec2d(0.0, h))
-  case Circle(pos, r, _) => HCircle(pos, r)
-}
-
-def collides(h1: Hitbox, h2: Hitbox): Bool = h1 match {
-  case HRect(c1, c2, c3, c4) => h2 match {
-    case HRect(_, _, _, _) =>
-      [c1, c2, c3, c4].any { p =>
-        p.isInside(h2)
-      }
-    case _ => h2.collides(h1)
-  }
-  //https://stackoverflow.com/a/402019/15982248
-  //https://stackoverflow.com/a/1079478/15982248
-  case HCircle(pos, r) => h2 match {
-    case HRect(c1, c2, c3, c4) =>
-      def isInside(edge: (Vec2d, Vec2d)): Bool = {
-        val (start, end) = edge
-        val edgeV = end - start
-        val centerV = pos - start
-        val angle = angleClockwise(edgeV) - angleClockwise(centerV)
-        val projected = centerV.rotate(angle)
-        length(projected - centerV) < r
-      }
-
-      val edges = [
-        (c1, c2),
-        (c2, c3),
-        (c3, c4),
-        (c4, c1)
-      ]
-      edges.any { e => e.isInside() } || pos.isInside(h2)
-    case HCircle(pos2, r2) =>
-      length(pos - pos2) < max(r, r2)
-    case HCompose(first, second) =>
-      collides(h1, first) || collides(h1, second)
-  }
-  case HCompose(first, second) =>
-    collides(first, h2) || collides(second, h2)
-}
-
-def isInside(vec: Vec2d, hitbox: Hitbox): Bool = hitbox match {
-  case HRect(c1, c2, c3, c4) =>
-    //make rect axis aligned and c1 the upperLeft corner
-    val angle = (c2 - c1).angleClockwise().neg()
-    val upperLeft = c1.rotate(angle, NULL_VECTOR)
-    val lowerRight = c3.rotate(angle, NULL_VECTOR)
-    val rotatedPoint = vec.rotate(angle, NULL_VECTOR)
-    (rotatedPoint > upperLeft) && (rotatedPoint < lowerRight)
-  case HCircle(pos, r) => length(vec - pos) < r
-  case HCompose(h1, h2) => vec.isInside(h1) || vec.isInside(h2)
-}
-
-def show(d: SimpleDrawable): String = d match {
-  case Rect(uL, w, h, c) => 
-    "Rect(" ++ [show(uL), show(w), show(h), show(c)].mkString(", ") ++ ")"
-  case Circle(pos, radius, color) =>
-    "Circle(" ++ [show(pos), show(radius), show(color)].mkString(", ") ++ ")"
-}
-
-def mkString(list: List[String], delim: String): String = list match {
-  case Nil() => "" 
-  case Cons(head, tail) => 
-    def go(list: List[String]): String = list match {
-      case Nil() => ""
-      case Cons(head, tail) => delim ++ head ++ go(tail)
-    } 
-    head ++ go(tail)
-}
-
-type ManipulatedDrawable {
-  Simple(drawable: SimpleDrawable)
-  Rotate(inner: ManipulatedDrawable, rotation: Double, relativeTo: Option[Vec2d])
-  Compose(first: ManipulatedDrawable, second: ManipulatedDrawable)
-}
-
-def toHitbox(d: ManipulatedDrawable): Hitbox = d match {
-  case Simple(inner) => inner.toHitbox()
-  case Rotate(inner, rotation, relativeTo) =>
-    inner.toHitbox().rotate(rotation, relativeTo)
-  case Compose(first, second) =>
-    HCompose(first.toHitbox(), second.toHitbox())
-}
-
-def collapseRotations(d: ManipulatedDrawable): ManipulatedDrawable = d match {
-  case Simple(inner) => Simple(inner)
-  case Rotate(Rotate(inner, innerRotation, innerRelative), rotation, relativeTo) =>
-    if (innerRelative.equals(relativeTo)) 
-      Rotate(inner.collapseRotations(), innerRotation + rotation, relativeTo)
-    else 
-      Rotate(
-        Rotate(inner, innerRotation, innerRelative).collapseRotations(), 
-        rotation, relativeTo
-      )
-  case Rotate(inner, rotation, relativeTo) => 
-    Rotate(inner.collapseRotations(), rotation, relativeTo)
-  case Compose(first, second) => 
-    Compose(first.collapseRotations(), second.collapseRotations())
-}
-
-def show(d: ManipulatedDrawable): String = d match {
-  case Simple(inner) => "Simple(" ++ show(inner) ++ ")"
-  case Rotate(inner, rotation, relativeTo) =>
-    "Rotate(" ++ 
-      [show(inner), show(rotation), show(relativeTo) { vec2d::show }].mkString(", ") 
-    ++ ")"
-  case Compose(first, second) =>
-    "Compose(" ++ show(first) ++ ", " ++ show(second) ++ ")"
-}
-
-def changeColor(drawable: SimpleDrawable, to: Color): SimpleDrawable = drawable match {
-  case Rect(uL, w, h, _) => Rect(uL, w, h, to)
-  case Circle(p, r, _) => Circle(p, r, to)
-}
-
-def getCenter(drawable: SimpleDrawable): Vec2d = drawable match {
-  case Rect(upperLeft, width, height, _) => 
-    upperLeft + Vec2d(0.5 * width, 0.5 * height)
-  case Circle(pos, _, _) => pos
-}
-
-def getCenter(drawable: ManipulatedDrawable): Vec2d = drawable match {
-  case Simple(inner) => inner.getCenter()
-  case Rotate(inner, rotation, relativeTo) =>
-    val innerCenter = inner.getCenter()
-    val relat = relativeTo.getOrElse { () => innerCenter }
-    innerCenter.rotate(rotation, relat)
-  case Compose(first, second) => first.getCenter()
-}
-
-def collides(d1: ManipulatedDrawable, d2: ManipulatedDrawable): Bool =
-  collides(d1.toHitbox(), d2.toHitbox())
 
 record AABB(upperLeft: Vec2d, lowerRight: Vec2d)
 
@@ -315,18 +137,6 @@ def canvas[T] { function: () => T / {Canvas} }: T = {
       resume(())
     }
   }
-}
-
-def move(drawable: SimpleDrawable, dVec: Vec2d): SimpleDrawable = drawable match {
-  case Rect(upperLeft, w, h, c) => Rect(upperLeft + dVec, w, h, c)
-  case Circle(pos, r, c) => Circle(pos + dVec, r, c)
-}
-
-def move(drawable: ManipulatedDrawable, dVec: Vec2d): ManipulatedDrawable = drawable match {
-  case Simple(inner) => Simple(inner.move(dVec))
-  case Rotate(inner, angle, relativeTo) => 
-    Rotate(inner.move(dVec), angle, relativeTo.map{v => v + dVec})
-  case Compose(first, second) => Compose(first.move(dVec), second.move(dVec))
 }
 
 def move(gameObject: GameObject, dt: Int): GameObject = gameObject match {

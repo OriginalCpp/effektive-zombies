@@ -376,20 +376,28 @@ def main(): Unit = {
     val player = game.get.player
     val movedPlayer = player.move(dt)
     val objects = game.get.objects
-    val (shots, other) = objects.partition {
+    val (shots, zombies) = objects.partition {
       case Shot(_, _) => true
-      case _          => false
+      case Zombie(_, _) => false
     }
-    val (dead, alive) = other.partition {
-      case Zombie(zHitbox, _) => 
-        shots.foldRight(false) { (shot, z) => shot match {
-          case Shot(sHitbox, _) =>
-            z || zHitbox.collides(sHitbox)
+    val (dead, alive) = zombies.partition {
+      case Zombie(zHitbox, _) =>
+        shots.any {
+          case Shot(sHitbox, _) => zHitbox.collides(sHitbox)
           case _ => false
-        }}
+        }
       case _              => false
     }
-    val updatedObjs = shots.append(alive)
+    val (usedShots, remainingShots) = shots.partition {
+      case Shot(sHitbox, _) =>
+        dead.any {
+          case Zombie(zHitbox, _) => sHitbox.collides(zHitbox)
+          case _ => false
+        }
+      case _ => false
+    }
+
+    val updatedObjs = remainingShots.append(alive)
     val movedObjects = updatedObjs.map {
       case Zombie(h, m) =>
         val zombieCenter = h.getCenter()

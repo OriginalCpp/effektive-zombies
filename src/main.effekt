@@ -28,6 +28,72 @@ type SimpleDrawable {
   Circle(pos: Vec2d, radius: Int, color: Color)
 }
 
+type Hitbox {
+  //c1, c3 and c2, c4 are opposite corners
+  HRect(c1: Vec2d, c2: Vec2d, c3: Vec2d, c4: Vec2d)
+  HCircle(pos: Vec2d, radius: Int)
+  HCompose(h1: Hitbox, h2: Hitbox)
+}
+
+def getCenter(h: Hitbox): Vec2d = h match {
+  case HRect(c1, c2, c3, c4) => c1 + (c1 - c3) * 0.5
+  case HCircle(pos, _) => pos
+  case HCompose(h1, h2) => h1.getCenter()
+}
+
+def rotate(h: Hitbox, angle: Double, relativeTo: Option[Vec2d]): Hitbox = {
+  val relat = relativeTo.getOrElse { h.getCenter() }
+  h match {
+    case HRect(c1, c2, c3, c4) =>
+      HRect(
+        c1.rotate(angle, relat), 
+        c2.rotate(angle, relat),
+        c3.rotate(angle, relat),
+        c4.rotate(angle, relat)
+      )
+    case HCircle(pos, radius) => HCircle(pos.rotate(angle, relat), radius)
+    case HCompose(h1, h2) => 
+      HCompose(h1.rotate(angle, relativeTo), h2.rotate(angle, relativeTo))
+  }
+}
+
+def toHitbox(d: SimpleDrawable): Hitbox = d match {
+  case Rect(uL, w, h, _) => 
+    HRect(uL, uL + fromInt(w, 0), uL + fromInt(w, h), uL + fromInt(0, h))
+  case Circle(pos, r, _) => HCircle(pos, r)
+}
+
+def collides(h1: Hitbox, h2: Hitbox): Bool = h1 match {
+  case HRect(c1, c2, c3, c4) =>
+    [c1, c2, c3, c4].any { p =>
+      p.isInside(h2)
+    }
+  case HCircle(pos, r) => h2 match {
+    case HRect(c1, c2, c3, c4) =>
+      [c1, c2, c3, c4].any { p =>
+        p.isInside(h1)
+    }
+    case HCircle(pos2, r2) =>
+      length(pos - pos2) < max(r, r2).toDouble()
+    case HCompose(first, second) =>
+      collides(h1, first) || collides(h1, second)
+  }
+  case HCompose(first, second) =>
+    collides(first, h2) || collides(second, h2)
+}
+
+def isInside(vec: Vec2d, hitbox: Hitbox): Bool = hitbox match {
+  case HRect(c1, c2, c3, c4) =>
+    //make rect axis aligned and c1 the upperLeft corner
+    val angle = (c1 - c2).angleClockwise()
+    val uL = c1.rotate(angle, NULL_VECTOR)
+    val lR = c3.rotate(angle, NULL_VECTOR)
+    val rotatedPoint = vec.rotate(angle, NULL_VECTOR)
+    (rotatedPoint > uL) && (rotatedPoint < lR)
+  case HCircle(pos, r) => length(vec - pos) < r.toDouble()
+  case HCompose(h1, h2) => vec.isInside(h1) || vec.isInside(h2)
+}
+
 def show(d: SimpleDrawable): String = d match {
   case Rect(uL, w, h, c) => 
     "Rect(" ++ [show(uL), show(w), show(h), c.toString()].mkString(", ") ++ ")"
@@ -49,6 +115,14 @@ type ManipulatedDrawable {
   Simple(drawable: SimpleDrawable)
   Rotate(inner: ManipulatedDrawable, rotation: Double, relativeTo: Option[Vec2d])
   Compose(first: ManipulatedDrawable, second: ManipulatedDrawable)
+}
+
+def toHitbox(d: ManipulatedDrawable): Hitbox = d match {
+  case Simple(inner) => inner.toHitbox()
+  case Rotate(inner, rotation, relativeTo) =>
+    inner.toHitbox().rotate(rotation, relativeTo)
+  case Compose(first, second) =>
+    HCompose(first.toHitbox(), second.toHitbox())
 }
 
 def collapse(d: ManipulatedDrawable): ManipulatedDrawable = d match {
@@ -93,6 +167,9 @@ def getCenter(drawable: ManipulatedDrawable): Vec2d = drawable match {
   case Compose(first, second) => first.getCenter()
 }
 
+def collides(d1: ManipulatedDrawable, d2: ManipulatedDrawable): Bool =
+  collides(d1.toHitbox(), d2.toHitbox())
+
 record AABB(upperLeft: Vec2d, lowerRight: Vec2d)
 
 def getAABB(drawable: SimpleDrawable): AABB = drawable match {
@@ -104,8 +181,8 @@ def getAABB(drawable: SimpleDrawable): AABB = drawable match {
 }
 
 type GameObject {
-  Shot(hitbox: ManipulatedDrawable, movementVector: Vec2d)
-  Zombie(hitbox: ManipulatedDrawable, movementVector: Vec2d)
+  Shot(drawable: ManipulatedDrawable, movementVector: Vec2d)
+  Zombie(drawable: ManipulatedDrawable, movementVector: Vec2d)
 }
 
 def getCenter(object: GameObject): Vec2d = object match {
@@ -120,7 +197,7 @@ def getHitbox(object: GameObject): ManipulatedDrawable = object match {
 
 record Window(width: Int, height: Int)
 
-record Player(hitbox: SimpleDrawable, gun: SimpleDrawable)
+record Player(drawable: SimpleDrawable, gun: SimpleDrawable)
 
 record Game(window: Window, player: Player, objects: List[GameObject])
 
@@ -161,7 +238,7 @@ def spawnZombie(game: Game): Game = {
     case Left() => Vec2d(0.0, r * dH)
     case Top() => Vec2d(r * dW, 0.0)
   }
-  val playerAABB = game.player.hitbox.getAABB()
+  val playerAABB = game.player.drawable.getAABB()
   val AABBSizes = playerAABB.lowerRight - playerAABB.upperLeft
   val zombieSize = (max(AABBSizes.x, AABBSizes.y) / 2.0).toInt()
   val zombie = Zombie(Simple(Circle(zombiePos, zombieSize, Black())), Vec2d(0.3, 0.0))
@@ -270,15 +347,14 @@ def main(): Unit = {
 
   val game = ref[Game](Game(WINDOW, START_PLAYER, []))
 
-  game.set(game.get.spawnZombie())
-
   val keysPressed = emptyMap[String, Bool]()
   val mousePos = ref[Vec2d](NULL_VECTOR)
   val now = ref[Int](getTime())
+  val zombieTimerMs = ref[Int](1000)
 
   def move(player: Player, dt: Int): Player = {
     val dV = dt * keysPressed.assembleMovement(PLAYER_SPEED)
-    Player(player.hitbox.move(dV), player.gun.move(dV))
+    Player(player.drawable.move(dV), player.gun.move(dV))
   }
 
   def calcDt(): Int = {
@@ -289,23 +365,46 @@ def main(): Unit = {
 
   def render(deadline: IdleDeadline): Unit = {
     val dt = calcDt()
+    val timeLeftToSpawn = zombieTimerMs.get - dt
+    if (timeLeftToSpawn < 0) {
+      game.set(game.get.spawnZombie())
+      zombieTimerMs.set(timeLeftToSpawn + 1000)
+    } else {
+      zombieTimerMs.set(timeLeftToSpawn)
+    }
+
     val player = game.get.player
     val movedPlayer = player.move(dt)
-    val movedObjects = game.get.objects.map {
+    val objects = game.get.objects
+    val (shots, other) = objects.partition {
+      case Shot(_, _) => true
+      case _          => false
+    }
+    val (dead, alive) = other.partition {
+      case Zombie(zHitbox, _) => 
+        shots.foldRight(false) { (shot, z) => shot match {
+          case Shot(sHitbox, _) =>
+            z || zHitbox.collides(sHitbox)
+          case _ => false
+        }}
+      case _              => false
+    }
+    val updatedObjs = shots.append(alive)
+    val movedObjects = updatedObjs.map {
       case Zombie(h, m) =>
         val zombieCenter = h.getCenter()
-        val zombiePlayerVec = player.hitbox.getCenter() - zombieCenter
+        val zombiePlayerVec = player.drawable.getCenter() - zombieCenter
         val missingAngle = angleClockwise(zombiePlayerVec) - angleClockwise(m)
         val newHitbox = Rotate(h, missingAngle, None()).collapse()
         Zombie(newHitbox, m.rotate(missingAngle)).move(dt)
       case o => o.move(dt)
     }
-    val movedPlayerCenter = movedPlayer.hitbox.getCenter()
+    val movedPlayerCenter = movedPlayer.drawable.getCenter()
     val gunAngle = angleClockwise(mousePos.get - movedPlayerCenter)
     canvas {
       do clear()
       do draw(Rotate(
-        Compose(Simple(movedPlayer.hitbox), 
+        Compose(Simple(movedPlayer.drawable), 
         Simple(movedPlayer.gun)), 
         gunAngle, None()
       ))
@@ -327,7 +426,7 @@ def main(): Unit = {
     val leftButtonPressed = event.getButton() == 0
     if (leftButtonPressed) {
       val player = game.get.player
-      val playerCenter = player.hitbox.getCenter()
+      val playerCenter = player.drawable.getCenter()
       val gunAngle = angleClockwise(mousePos.get - playerCenter)
       val shotDrawable = player.gun.changeColor(Black())
       val shot = Shot(

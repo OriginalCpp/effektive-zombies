@@ -125,16 +125,20 @@ def toHitbox(d: ManipulatedDrawable): Hitbox = d match {
     HCompose(first.toHitbox(), second.toHitbox())
 }
 
-def collapse(d: ManipulatedDrawable): ManipulatedDrawable = d match {
+def collapseRotations(d: ManipulatedDrawable): ManipulatedDrawable = d match {
+  case Simple(inner) => Simple(inner)
   case Rotate(Rotate(inner, innerRotation, innerRelative), rotation, relativeTo) =>
     if (innerRelative.equals(relativeTo)) 
-      Rotate(inner, innerRotation + rotation, relativeTo)
+      Rotate(inner.collapseRotations(), innerRotation + rotation, relativeTo)
     else 
       Rotate(
-        Rotate(inner, innerRotation, innerRelative).collapse(), 
+        Rotate(inner, innerRotation, innerRelative).collapseRotations(), 
         rotation, relativeTo
       )
-  case _ => d
+  case Rotate(inner, rotation, relativeTo) => 
+    Rotate(inner.collapseRotations(), rotation, relativeTo)
+  case Compose(first, second) => 
+    Compose(first.collapseRotations(), second.collapseRotations())
 }
 
 def show(d: ManipulatedDrawable): String = d match {
@@ -403,7 +407,7 @@ def main(): Unit = {
         val zombieCenter = h.getCenter()
         val zombiePlayerVec = player.drawable.getCenter() - zombieCenter
         val missingAngle = angleClockwise(zombiePlayerVec) - angleClockwise(m)
-        val newHitbox = Rotate(h, missingAngle, None()).collapse()
+        val newHitbox = Rotate(h, missingAngle, None()).collapseRotations()
         Zombie(newHitbox, m.rotate(missingAngle)).move(dt)
       case o => o.move(dt)
     }

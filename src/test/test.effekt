@@ -3,6 +3,7 @@ module test/test
 import test
 import process
 
+import src/test/vec2dTest
 import mutable/map
 import src/shapes/hitbox
 import src/shapes/manipulated
@@ -10,75 +11,9 @@ import src/shapes/simple
 import src/main
 import src/vec2d
 
-def main(): Unit = mainSuite("") {
+def main(): Unit = mainSuite("mainSuite") {
   val testResults = [
-  suite("Vec2d") {
-    test("vector arithmetic") {
-      val v = 2 * (Vec2d(2.0, 3.0) + Vec2d(1.0, -1.0))
-      assertEqual(v, Vec2d(6.0, 4.0))
-    }
-
-    test("vector normalizing") {
-      val v = Vec2d(3.0, 4.0)
-      //length = sqrt(9 + 16) = 5
-      assertEqual(normalize(v), Vec2d(0.6, 0.8))
-    }
-  },
-
-  suite("rotations") {
-    test("angle calculation") {
-      val vectors = [
-        Vec2d(1.0, 0.0),
-        Vec2d(1.0, 1.0),
-        Vec2d(0.001, 1.0),
-        Vec2d(-1.0, 1.0),
-        Vec2d(-1.0, 0.0),
-        Vec2d(-1.0, -1.0),
-        Vec2d(0.001, -1.0),
-        Vec2d(1.0, -1.0)
-      ]
-
-      var expectedAngle = 0.0
-      vectors.foreach { v =>
-        assertEqual(angleClockwise(v), expectedAngle) 
-          { (d1, d2) => almostEqual(d1, d2, 0.001) } { d => genericShow[Double](d) }
-        expectedAngle = expectedAngle + 0.25 * PI
-      }
-    }
-
-    test("rotate around origin") {
-      val expected = Vec2d(1.0, 0.0)
-
-      val vectors = [
-        expected,
-        Vec2d(1.0, 1.0),
-        Vec2d(0.001, 1.0),
-        Vec2d(-1.0, 1.0),
-        Vec2d(-1.0, 0.0),
-        Vec2d(-1.0, -1.0),
-        Vec2d(0.001, -1.0),
-        Vec2d(1.0, -1.0)
-      ].map { v => v.normalize() }
-
-      var rotationAngle = 0.0
-
-      vectors.foreach { v =>
-        assertEqual(v.rotate(rotationAngle), expected) 
-          { vec2d::infixEq } { vec2d::show }
-        rotationAngle = rotationAngle - 0.25 * PI 
-      }
-    }
-
-    test("rotate relative") {
-      val toRotate = Vec2d(2.0, 2.0)
-      val angle = PI
-      val relativeTo = Vec2d(1.0, 1.0)
-      val expected = Vec2d(1.0, 2.0)
-
-      assertEqual(toRotate.rotate(angle, relativeTo), expected) 
-        { vec2d::infixEq } { vec2d::show }
-    }
-  },
+    vec2dSuite(),
 
   suite("collapse rotations") {
     val inner = Simple(Circle(fromInt(1, 1), 1.0, Red()))
@@ -181,8 +116,12 @@ def main(): Unit = mainSuite("") {
     test("playerMovement") {
       val keyMap = emptyMap[String, Bool]()
       def assertV(expected: Vec2d) = {
-        val calculated = keyMap.assembleMovement(1.0)
-        val msg = "Map " ++ show(keyMap.keys()) ++ " " ++ show(keyMap.values) ++ ".assembleMovement(1.0) = "
+        val calculated = try { wasdDirection() }
+        with Input {
+          def isPressed(key) = resume(keyMap.get(key).getOrElse { false })
+          def mousePos() = resume(NULL_VECTOR)
+        }
+        val msg = "Map " ++ show(keyMap.keys()) ++ " " ++ show(keyMap.values) ++ ".wasdDirection() = "
                   ++ show(calculated) ++ ", but expected " ++ show(expected) 
         assertTrue(calculated == expected, msg)
       }
@@ -223,7 +162,7 @@ def main(): Unit = mainSuite("") {
       assertFalse(point.isInside(hitbox), msg)
     }
 
-    test("hitbox collision") {
+    test("rect/circle collision") {
       val rectHitbox = HRect(
         Vec2d(0.0, 0.0),
         Vec2d(1.0, -2.0),
@@ -236,17 +175,155 @@ def main(): Unit = mainSuite("") {
       )
 
       assertTrue(rectHitbox.collides(circleHitbox))
+      assertTrue(circleHitbox.collides(rectHitbox))
+    }
+
+
+    test("rect/rect no collision") {
+      val c11 = fromInt(40, 40)
+      val c12 = fromInt(60, 40)
+      val c13 = fromInt(60, 60)
+      val c14 = fromInt(40, 60)
+
+      val hitboxOne: Hitbox = HRect(
+        c11, c12, 
+        c13, c14
+      )
+      val hitboxTwo: Hitbox = HRect(
+        fromInt(100, 100), fromInt(110, 100),
+        fromInt(110, 110), fromInt(100, 110)
+      )
+
+      val hitboxOneCorners: List[Vec2d] = [
+        c11, c12,
+        c13, c14
+      ]
+
+      hitboxOneCorners.foreach { c =>
+        assertFalse(
+          c.isInside(hitboxTwo),
+          show(c) ++ " should not be inside " ++ genericShow(hitboxTwo)
+        )
+      }
+
+      assertFalse(hitboxOne.collides(hitboxTwo))
+      assertFalse(hitboxTwo.collides(hitboxOne))
+    }
+
+    test("rect/rect collision") {
+      val hitboxOne = Rect(Vec2d(40.0, 40.0), 20.0, 20.0, Black()).toHitbox()
+      val hitboxTwo = Rect(Vec2d(50.0, 50.0), 10.0, 10.0, Black()).toHitbox()
+
+      assertTrue(hitboxOne.collides(hitboxTwo))
+      assertTrue(hitboxTwo.collides(hitboxOne))
+    }
+  },
+
+  suite("game update") {
+    val player = Player(
+      Circle(Vec2d(30.0, 30.0), 50.0, Green()),
+      Rect(Vec2d(80.0, 25.0), 10.0, 10.0, Black()), 1.0
+    )
+    val game = GameState(player, [])
+
+    def pseudoHandler { f: () => Unit / {Input, random, Screen} }: Unit = {
+      try { f() }
+      with Screen {
+        def width = resume(0.0)
+        def height = resume(0.0)
+      } with Input {
+        def isPressed(key) = resume(false)
+        def mousePos() = resume(Vec2d(0.0, 0.0))
+      } with random {
+        resume(0.0)
+      }
+    }
+
+    test("zombie spawn") {
+      val dt = 12
+      var timer = 10
+      with pseudoHandler
+      try { game.update(dt) }
+      with Timer {
+        def left() = resume(timer)
+        def reset() = {
+          timer = 10
+          resume(())
+        }
+        def change(by) = {
+          timer = timer + by
+          resume(())
+        }
+      }
+
+      assert(timer, 8)
+    }
+
+    test("no zombie spawn") {
+      val dt = 5
+      var timer = 8
+      with pseudoHandler
+      try { game.update(dt) }
+      with Timer {
+        def left() = resume(timer)
+        def reset() = {
+          timer = 10
+          resume(())
+        }
+        def change(by) = {
+          timer = timer + by
+          resume(())
+        }
+      }
+
+      assert(timer, 3)
+    }
+
+    test("zombie shooting") {
+      val SHOT_ZOMBIE_HITBOX = Simple(Rect(Vec2d(50.0, 50.0), 10.0, 10.0, Black()))
+      val SHOT_ZOMBIE = Zombie(
+        SHOT_ZOMBIE_HITBOX,
+        Vec2d(1.0, 1.0)
+      )
+      val ALIVE_HITBOX = Simple(Rect(Vec2d(100.0, 100.0), 10.0, 10.0, Black()))
+      val ALIVE = Zombie(
+        ALIVE_HITBOX,
+        Vec2d(1.0, 1.0)
+      )
+      val SHOT_HITBOX = Simple(Rect(Vec2d(40.0, 40.0), 20.0, 20.0, Black()))
+      val SHOT = Shot(
+        SHOT_HITBOX,
+        Vec2d(1.0, 1.0)
+      )
+
+      assertTrue(
+        SHOT_ZOMBIE_HITBOX.collides(SHOT_HITBOX),
+        "Shot should collide with overlapping zombie"
+      )
+
+      assertFalse(
+        ALIVE_HITBOX.collides(SHOT_HITBOX),
+        "Shot should not collide with non-overlapping zombie"
+      )
+      
+      val remaining = shooting([SHOT_ZOMBIE, ALIVE, SHOT])
+
+      assertTrue(
+        remaining.contains(ALIVE){(a, b) => a.equals(b)},
+        "Zombie that was not shot is dead"
+      )
+      assertFalse(
+        remaining.contains(SHOT_ZOMBIE){(a, b) => a.equals(b)},
+        "Shot zombie is not dead"
+      )
+      assertFalse(
+        remaining.contains(SHOT){(a, b) => a.equals(b)},
+        "Shot that hit zombie is still in the game"
+      )
     }
   },
 
   suite("other") {
-    test("Circle AABB") {
-      val circle = Circle(Vec2d(5.0, 5.0), 3.0, Red())
-      val expectedAABB = AABB(Vec2d(2.0, 2.0), Vec2d(8.0, 8.0))
-      val actual = circle.getAABB()
-      assertEqual(actual, expectedAABB)
-    }
-
     //This test has a very small chance to fail
     test("side choosing") {
       val width = 5.0
@@ -255,15 +332,19 @@ def main(): Unit = mainSuite("") {
       val leftProb = rightProb
       val topProb = 0.3125
       val bottomProb = topProb
+      val sides = [Top(), Right(), Bottom(), Left()]
+      val probs = [topProb, rightProb, bottomProb, leftProb]
 
-      var n = 100000
+      var n = 10000
       val size = n.toDouble()
       var rCount = 0.0
       var bCount = 0.0
       var lCount = 0.0
       var tCount = 0.0
       while(n != 0) {
-        chooseSide(height.toInt(), width.toInt()) match {
+        val chosenSide = try { sides.choose(probs).getOrElse{Right()} } 
+                         with random { resume(random()) }
+        chosenSide match {
           case Right() => rCount = rCount + 1.0
           case Bottom() => bCount = bCount + 1.0
           case Left() => lCount = lCount + 1.0

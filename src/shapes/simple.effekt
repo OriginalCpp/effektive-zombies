@@ -39,5 +39,5 @@ def move(drawable: SimpleDrawable, dVec: Vec2d): SimpleDrawable = drawable match
 def toHitbox(d: SimpleDrawable): Hitbox = d match {
   case Rect(uL, w, h, _) => 
     HRect(uL, uL + Vec2d(w, 0.0), uL + Vec2d(w, h), uL + Vec2d(0.0, h))
-  case Circle(pos, r, _) => HCircle(pos, r)
+  case Circle(center, r, _) => HCircle(center, r)
 }

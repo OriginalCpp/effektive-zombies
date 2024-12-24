@@ -25,7 +25,7 @@ def infixMul(vec: Vec2d, scalar: Double) = scalar * vec
 
 def infixMul(scalar: Double, vec: Vec2d): Vec2d = Vec2d(scalar * vec.x, scalar * vec.y)
 
-def almostEqual(d1: Double, d2: Double, epsilon: Double): Bool = (d1 - d2) < epsilon
+def almostEqual(d1: Double, d2: Double, epsilon: Double): Bool = abs(d1 - d2) < epsilon
 
 def infixEq(vec1: Vec2d, vec2: Vec2d): Bool = 
   vec1.x.almostEqual(vec2.x, 0.001) && vec1.y.almostEqual(vec2.y, 0.001)
@@ -35,6 +35,12 @@ def infixGt(vec1: Vec2d, vec2: Vec2d): Bool =
 
 def infixLt(vec1: Vec2d, vec2: Vec2d): Bool =
   (vec1.x < vec2.x) && (vec1.y < vec2.y)
+
+def infixGte(vec1: Vec2d, vec2: Vec2d): Bool =
+  (vec1 > vec2) || (vec1 == vec2)
+
+def infixLte(vec1: Vec2d, vec2: Vec2d): Bool =
+  (vec1 < vec2) || (vec1 == vec2)
 
 def show(vec: Vec2d) = "Vec2d(" ++ show(vec.x) ++ ", " ++ show(vec.y) ++ ")"
 

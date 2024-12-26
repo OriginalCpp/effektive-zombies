@@ -1,7 +1,6 @@
 module main
 
 import mutable/map
-import src/shapes/hitbox
 import src/shapes/manipulated
 import src/shapes/simple
 import src/ffi

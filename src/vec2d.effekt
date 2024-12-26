@@ -1,5 +1,7 @@
 module vec2d
 
+import src/utils
+
 record Vec2d(x: Double, y: Double)
 
 val NULL_VECTOR = Vec2d(0.0, 0.0)
@@ -24,8 +26,6 @@ def infixMul(scalar: Int, vec: Vec2d): Vec2d = scalar.toDouble() * vec
 def infixMul(vec: Vec2d, scalar: Double) = scalar * vec
 
 def infixMul(scalar: Double, vec: Vec2d): Vec2d = Vec2d(scalar * vec.x, scalar * vec.y)
-
-def almostEqual(d1: Double, d2: Double, epsilon: Double): Bool = abs(d1 - d2) < epsilon
 
 def infixEq(vec1: Vec2d, vec2: Vec2d): Bool = 
   vec1.x.almostEqual(vec2.x, 0.001) && vec1.y.almostEqual(vec2.y, 0.001)

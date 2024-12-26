@@ -36,13 +36,9 @@ def isInside(point: Vec2d, hitbox: Hitbox): Bool = hitbox match {
     //make rect axis aligned and c1 the upperLeft corner
     val angle = (c2 - c1).angleClockwise().neg()
     val upperLeft = c1.rotate(angle, NULL_VECTOR)
-    println(show(upperLeft))
     val lowerRight = c3.rotate(angle, NULL_VECTOR)
-    println(show(lowerRight))
     val rotatedPoint = point.rotate(angle, NULL_VECTOR)
-    println(show(rotatedPoint))
     val result = (rotatedPoint >= upperLeft) && (rotatedPoint <= lowerRight)
-    println(result)
     result
   case HCircle(center, r) => length(point - center) <= r
   case HCompose(h1, h2) => point.isInside(h1) || point.isInside(h2)

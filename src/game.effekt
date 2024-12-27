@@ -195,9 +195,11 @@ def renderDeathScreen(): Unit / { Canvas, Screen } = {
 
   val YOU_DIED = Text(
     "You Died",
-    center,
+    center - fromInt(0, 100),
     48,
     Serif(),
+    Center(),
+    Bottom(),
     Red()
   )
 

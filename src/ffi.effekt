@@ -66,10 +66,13 @@ extern io def clear(canvas: Node): Unit =
 
 extern io def drawText(
   canvas: Node, text: String,
-  x: Double, y: Double, font: String, color: String
+  x: Double, y: Double, font: String, 
+  alignment: String, baseline: String, color: String
 ): Unit =
   jsWeb """ctx = ${canvas}.getContext("2d");
            ctx.font = ${font};
+           ctx.textAlign = ${alignment};
+           ctx.textBaseline = ${baseline};
            ctx.fillStyle = ${color};
            ctx.fillText(${text}, ${x}, ${y})"""
 

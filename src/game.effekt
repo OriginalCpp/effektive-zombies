@@ -155,12 +155,14 @@ def update(game: GameState, dt: Int): GameState / { Input, random, Screen, Timer
     []
   }
 
-  val remainingObjects = shooting(spawnedZombie.append(game.objects))
+  val remainingAfterShooting = shooting(spawnedZombie.append(game.objects))
 
-  val playerHealthLoss = remainingObjects.count {
+  val (damagingZombies, remainingObjects) = remainingAfterShooting.partition {
     case Zombie(hitbox, _) => hitbox.collides(Simple(player.drawable))
     case _ => false
   }
+
+  val playerHealthLoss = damagingZombies.size
 
   val movedObjects = remainingObjects.map {
     case Zombie(h, m) =>

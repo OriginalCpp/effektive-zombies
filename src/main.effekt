@@ -5,6 +5,7 @@ import src/shapes/manipulated
 import src/shapes/simple
 import src/ffi
 import src/game
+import src/text
 import src/utils
 import src/vec2d
 
@@ -21,13 +22,14 @@ def main(): Unit = {
 
   val PLAYER_SIZE = CANVAS_HEIGHT / 15.0
   val PLAYER_SPEED = 0.4
+  val PLAYER_HEALTH = 1
   val PLAYER_START_POS = CANVAS_CENTER
   val PLAYER_HITBOX = Circle(PLAYER_START_POS, PLAYER_SIZE, Green())
   val GUN_WIDTH  = PLAYER_SIZE / 1.2
   val GUN_HEIGTH = GUN_WIDTH / 3.0
   val GUN_START_POS = PLAYER_START_POS + Vec2d(PLAYER_SIZE - 1.0, -0.5 * GUN_HEIGTH)
   val GUN = Rect(GUN_START_POS, GUN_WIDTH, GUN_HEIGTH, Black())
-  val START_PLAYER = Player(PLAYER_HITBOX, GUN, PLAYER_SPEED)
+  val START_PLAYER = Player(PLAYER_HITBOX, GUN, PLAYER_HEALTH, PLAYER_SPEED)
 
   val game = ref[GameState](GameState(START_PLAYER, []))
 
@@ -47,9 +49,13 @@ def main(): Unit = {
 
   def idleCallback(deadline: IdleDeadline): Unit = {
     try {
-      val updatedGame = game.get.update(timeSinceLastFrame()) 
-      render(updatedGame)
-      game.set(updatedGame)
+      if (game.get.player.isAlive) {
+        val updatedGame = game.get.update(timeSinceLastFrame()) 
+        render(updatedGame)
+        game.set(updatedGame)
+      } else {
+        renderDeathScreen()
+      }
     } with Canvas {
       def draw(drawable) = {
         def drawSimple(d: SimpleDrawable): Unit = d match {
@@ -76,6 +82,10 @@ def main(): Unit = {
         unwrapDraw(drawable)
         resume(())
       }
+      def write(text) = canvas.drawText(
+        text.text, text.position.x, text.position.y,
+        show(text.fontSizePX) ++ "px " ++ show(text.fontType), show(text.color)
+      )
       def clear = { canvas.clear(); resume(()) }
     } with Input {
       def isPressed(key) = resume(keysPressed.get(key).getOrElse { false })

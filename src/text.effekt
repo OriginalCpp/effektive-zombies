@@ -1,0 +1,20 @@
+module text
+
+import src/shapes/simple
+import src/vec2d
+
+type Font {
+  Serif()
+}
+
+def show(font: Font): String = font match {
+  case Serif() => "serif"
+}
+
+record Text(
+  text: String,
+  position: Vec2d,
+  fontSizePX: Int,
+  fontType: Font,
+  color: Color
+)

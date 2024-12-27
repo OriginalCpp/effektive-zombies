@@ -8,64 +8,62 @@ import src/shapes/manipulated
 import src/shapes/simple
 
 def shapesSuite() = suite("shapes") {
-  suite("collapse rotations") {
-    val inner = Simple(Circle(fromInt(1, 1), 1.0, Red()))
+  val inner = Simple(Circle(fromInt(1, 1), 1.0, Red()))
 
-    test("simpleCollapse") {
-      val simpleCollapse = Rotate(
+  test("simpleCollapse") {
+    val simpleCollapse = Rotate(
+      Rotate(
+        inner,
+        0.5 * PI,
+        None()
+      ),
+      0.5 * PI,
+      None()
+    )
+
+    val expected = Rotate(
+      inner,
+      PI,
+      None()
+    )
+
+    assertEqual(simpleCollapse.collapseRotations(), expected)
+  }
+
+  test("no collapse") {
+    val noCollapse = Rotate(
+      Rotate(
+        inner,
+        0.5 * PI,
+        Some(Vec2d(1.0, 1.0))
+      ),
+      0.5 * PI,
+      Some(Vec2d(0.5, 0.5))
+    )
+
+    assertEqual(noCollapse.collapseRotations(), noCollapse)
+  }
+
+  test("complex collapse") {
+    def rot(d: ManipulatedDrawable, angle: Double): ManipulatedDrawable = 
+      Rotate(d, angle, None())
+
+    val complexCollapse = Compose(inner.rot(PI).rot(PI), inner).rot(PI).rot(0.5 * PI)
+
+    val complexCollapseExpected = Rotate(
+      Compose(
         Rotate(
           inner,
-          0.5 * PI,
+          2.0 * PI,
           None()
         ),
-        0.5 * PI,
-        None()
-      )
+        inner
+      ),
+      1.5 * PI,
+      None()
+    )
 
-      val expected = Rotate(
-        inner,
-        PI,
-        None()
-      )
-
-      assertEqual(simpleCollapse.collapseRotations(), expected)
-    }
-
-    test("no collapse") {
-      val noCollapse = Rotate(
-        Rotate(
-          inner,
-          0.5 * PI,
-          Some(Vec2d(1.0, 1.0))
-        ),
-        0.5 * PI,
-        Some(Vec2d(0.5, 0.5))
-      )
-
-      assertEqual(noCollapse.collapseRotations(), noCollapse)
-    }
-
-    test("complex collapse") {
-      def rot(d: ManipulatedDrawable, angle: Double): ManipulatedDrawable = 
-        Rotate(d, angle, None())
-
-      val complexCollapse = Compose(inner.rot(PI).rot(PI), inner).rot(PI).rot(0.5 * PI)
-
-      val complexCollapseExpected = Rotate(
-        Compose(
-          Rotate(
-            inner,
-            2.0 * PI,
-            None()
-          ),
-          inner
-        ),
-        1.5 * PI,
-        None()
-      )
-
-      assertEqual(complexCollapse.collapseRotations(), complexCollapseExpected)
-    }
+    assertEqual(complexCollapse.collapseRotations(), complexCollapseExpected)
   }
 
   test("same center after rotating around ones own center") {
@@ -89,6 +87,26 @@ def shapesSuite() = suite("shapes") {
     assertEqual(rect.getCenter(), expected) { vec2d::infixEq } { vec2d::show }
   }
 
+  test("rotated hitbox conversion") {
+    val angle = 0.25 * PI
+    val hitbox = Rotate(
+      Simple(Rect(fromInt(3, 3), 6.0, 8.0, Red())),
+      0.25 * PI,
+      None()  
+    )
+
+    val relat = fromInt(6, 7)
+    val expected = HRect(
+      fromInt(9, 11).rotate(angle, relat),
+      fromInt(3, 11).rotate(angle, relat),
+      fromInt(3, 3).rotate(angle, relat),
+      fromInt(9, 3).rotate(angle, relat)
+    )
+
+    assertEqual(hitbox.toHitbox(), expected) 
+      { hitbox::infixEq } { h => genericShow(h) }
+  }
+
   test("moving rotated shape") {
     val rect = Rect(Vec2d(10.0, 10.0), 10.0, 5.0, Red())
     val rectPointingUp = Rotate(
@@ -103,7 +121,7 @@ def shapesSuite() = suite("shapes") {
     assertEqual(movedRect, expected)
   }
 
-  test("point inside") {
+  test("point inside rect") {
     val point = Vec2d(0.0, -1.0)
     val hitbox = Rect(NULL_VECTOR, 3.0, 2.0, Red()).toHitbox()
       .rotate(1.25 * PI, Some(NULL_VECTOR))
@@ -111,11 +129,11 @@ def shapesSuite() = suite("shapes") {
     assertTrue(point.isInside(hitbox), msg)
   }
   
-  test("point outside") {
+  test("point barely outside two circles") {
     val point = Vec2d(0.0, 0.0)
     val hitbox = HCompose(
-      HCircle(Vec2d(-2.0, -2.0), 1.5),
-      HCircle(Vec2d(2.0, 2.0), 1.5)
+      HCircle(Vec2d(-1.0, -1.0), 1.4),
+      HCircle(Vec2d(1.0, 1.0), 1.4)
     )
     
     val msg = "Point " ++ show(point) 
@@ -137,6 +155,35 @@ def shapesSuite() = suite("shapes") {
 
     assertTrue(rectHitbox.collides(circleHitbox))
     assertTrue(circleHitbox.collides(rectHitbox))
+  }
+
+  test("edge inside circle") {
+    val edge = (fromInt(0, 0), fromInt(2, 2))
+
+    assertTrue(edge.isInsideCircle(fromInt(2, 0), 1.7)) 
+  }
+
+  test("edge barely outside circle") {
+    val edge = (fromInt(0, 5), fromInt(3, -2))
+    
+    assertTrue(edge.isInsideCircle(fromInt(2, 0), 1.7))
+  }
+
+  test("rect/circle no collision") {
+    val hRect = Rotate(
+      Simple(Rect(fromInt(28, 36), 5.0, 17.0, Black())),
+      1.0,
+      Some(Vec2d(22.0, 22.5))
+    )
+
+    val hCircle = Rotate(
+      Simple(Circle(fromInt(40, 19), 6.0, Red())),
+      3.0,
+      None()
+    )
+
+    assertFalse(hRect.collides(hCircle))
+    assertFalse(hCircle.collides(hRect))
   }
 
 

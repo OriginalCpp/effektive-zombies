@@ -15,7 +15,7 @@ def utilsSuite() = suite("utils") {
     val sides = ["top", "right", "bottom", "left"]
     val probs = [topProb, rightProb, bottomProb, leftProb]
 
-    var n = 10000
+    var n = 30000
     val size = n.toDouble()
     var rCount = 0.0
     var bCount = 0.0

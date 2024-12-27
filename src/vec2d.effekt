@@ -12,7 +12,9 @@ def infixAdd(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x + vec2.x, vec1.y + 
 
 def infixSub(vec1: Vec2d, vec2: Vec2d): Vec2d = Vec2d(vec1.x - vec2.x, vec1.y - vec2.y)
 
-def length(vec: Vec2d): Double = sqrt(vec.x * vec.x + vec.y * vec.y)
+def dot(vec1: Vec2d, vec2: Vec2d): Double = vec1.x * vec2.x + vec1.y * vec2.y
+
+def length(vec: Vec2d): Double = sqrt(vec.dot(vec))
 
 def normalize(vec: Vec2d): Vec2d = {
   val length = vec.length()

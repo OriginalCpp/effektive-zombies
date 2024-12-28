@@ -23,6 +23,9 @@ interface Screen {
   def height(): Double
 }
 
+def visible(d: ManipulatedDrawable): Bool / Screen = 
+  collides(d, Simple(Rect(NULL_VECTOR, do width(), do height(), Black())))
+
 interface Timer {
   def left(): Int
   def reset(): Unit
@@ -172,7 +175,12 @@ def update(game: GameState, dt: Int): GameState / { Input, random, Screen, Timer
     []
   }
 
-  val remainingAfterShooting = shooting(spawnedZombie.append(game.objects))
+  val (inRange, outOfRange) = objects.partition {
+    case Shot(hitbox, _) => hitbox.visible()
+    case _ => true
+  } 
+
+  val remainingAfterShooting = shooting(spawnedZombie.append(inRange))
 
   val (damagingZombies, remainingObjects) = remainingAfterShooting.partition {
     case Zombie(hitbox, _) => hitbox.collides(Simple(player.drawable))

@@ -4,16 +4,12 @@ import mutable/map
 import src/shapes/hitbox
 import src/shapes/manipulated
 import src/shapes/simple
+import src/constants
 import src/ffi
 import src/game
 import src/text
 import src/utils
 import src/vec2d
-
-val KEY_DOWN = "keydown"
-val KEY_UP = "keyup"
-val MOUSE_MOVE = "mousemove"
-val MOUSE_DOWN = "mousedown"
 
 def main(): Unit = {
   val CANVAS_WIDTH = clientWidth()
@@ -39,14 +35,9 @@ def main(): Unit = {
   val mousePos = ref[Vec2d](NULL_VECTOR)
   val lastFrameTimeStamp = ref[Int](getTime())
 
-  val SECOND = 1000
-
-  val START_WAVE = 1
   val wave = ref[Int](START_WAVE)
-  val START_WAVE_TIMER = 5 * SECOND
   val waveTimerMs = ref[Int](START_WAVE_TIMER)
 
-  val ZOMBIE_SPAWN_INTERVAL = 1 * SECOND
   val zombieTimerMs = ref[Int](ZOMBIE_SPAWN_INTERVAL)
 
   val RETRY_BUTTON_WIDTH = CANVAS_WIDTH / 4.0

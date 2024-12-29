@@ -28,12 +28,12 @@ def main(): Unit = {
   val GUN = Rect(GUN_START_POS, GUN_WIDTH, GUN_HEIGTH, Black())
   val START_PLAYER = Player(PLAYER_HITBOX, GUN, PLAYER_HEALTH, PLAYER_SPEED)
 
-  val wave = ref[Int](START_WAVE)
-  val waveTimerMs = ref[Int](START_WAVE_TIMER)
+  val START_TIMERS = GameTimer(
+    Timer(ZOMBIE_SPAWN_INTERVAL),
+    Timer(START_WAVE_TIMER)
+  )
 
-  val START_TIMERS = GameTimer(Timer(ZOMBIE_SPAWN_INTERVAL), Timer(0))
-
-  val START_GAME = GameState(START_PLAYER, [], START_TIMERS)
+  val START_GAME = GameState(START_PLAYER, [], START_TIMERS, START_WAVE)
   val game = ref[GameState](START_GAME)
 
   val keysPressed = emptyMap[String, Bool]()
@@ -60,14 +60,8 @@ def main(): Unit = {
 
   def idleCallback(deadline: IdleDeadline): Unit = {
     try {
+      val dt = timeSinceLastFrame()
       if (game.get.player.isAlive) {
-        val dt = timeSinceLastFrame()
-        val remaining = waveTimerMs.get - dt
-        val nextWave = remaining < 0
-        if (nextWave) {
-          wave.map{inc}
-          waveTimerMs.set(remaining + START_WAVE_TIMER)
-        } else waveTimerMs.set(remaining)
         val updatedGame = game.get.update(dt) 
         render(updatedGame)
         game.set(updatedGame)
@@ -111,8 +105,7 @@ def main(): Unit = {
         resume(())
       }
       def clear = { canvas.clear(); resume(()) }
-    } with getWave { resume(wave.get) }
-    with Input {
+    } with Input {
       def isPressed(key) = resume(keysPressed.get(key).getOrElse { false })
       def mousePos() = resume(mousePos.get)
     } with random {
@@ -150,9 +143,6 @@ def main(): Unit = {
         game.map{g => g.addObject(bullet)}
       } else if (mousePos.get.isInside(RETRY_BUTTON.toHitbox())) {
         game.set(START_GAME)
-        lastFrameTimeStamp.set(getTime())
-        wave.set(START_WAVE)
-        waveTimerMs.set(START_WAVE_TIMER)
       }
     }
   }

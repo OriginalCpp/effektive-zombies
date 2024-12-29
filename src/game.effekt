@@ -145,8 +145,13 @@ def move(player: Player, dt: Int): Player / Input = {
   )
 }
 
-def shooting(objects: List[GameObject]): (List[GameObject], Int) = {
-  val (bullets, zombies) = objects.partition {
+def shooting(objects: List[GameObject]): (List[GameObject], Int) / Screen = {
+  val (inRange, outOfRange) = objects.partition {
+    case Bullet(hitbox, _) => hitbox.visible()
+    case _ => true
+  }
+
+  val (bullets, zombies) = inRange.partition {
     case Bullet(_, _) => true
     case Zombie(_, _) => false
   }
@@ -177,12 +182,7 @@ def update(game: GameState, dt: Int): GameState / { Input, random, Screen } = {
   val movedPlayer = player.move(dt)
   val objects = game.objects
 
-  val (inRange, outOfRange) = objects.partition {
-    case Bullet(hitbox, _) => hitbox.visible()
-    case _ => true
-  } 
-
-  val (remaining, deadZombies) = shooting(inRange)
+  val (remaining, deadZombies) = shooting(objects)
 
   val (damagingZombies, remainingObjects) = remaining.partition {
     case Zombie(hitbox, _) => hitbox.collides(Simple(player.drawable))

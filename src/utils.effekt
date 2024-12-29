@@ -11,6 +11,11 @@ def min(x: Double, y: Double): Double = if (x < y) x else y
 def clamp(toClamp: Double, lowerBound: Double, upperBound: Double): Double =
   max(lowerBound, min(toClamp, upperBound))
 
+def toList[T](option: Option[T]): List[T] = option match {
+  case Some(v) => [v]
+  case None() => []
+}
+
 /// Can return None if the given lists are not of the same length
 /// or if the probabilities do not add up to 1
 def choose[T](chooseFrom: List[T], probabilities: List[Double]): Option[T] / random = {

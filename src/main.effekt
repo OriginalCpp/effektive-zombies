@@ -28,17 +28,17 @@ def main(): Unit = {
   val GUN = Rect(GUN_START_POS, GUN_WIDTH, GUN_HEIGTH, Black())
   val START_PLAYER = Player(PLAYER_HITBOX, GUN, PLAYER_HEALTH, PLAYER_SPEED)
 
-  val START_GAME = GameState(START_PLAYER, [])
+  val wave = ref[Int](START_WAVE)
+  val waveTimerMs = ref[Int](START_WAVE_TIMER)
+
+  val START_TIMERS = GameTimer(Timer(ZOMBIE_SPAWN_INTERVAL), Timer(0))
+
+  val START_GAME = GameState(START_PLAYER, [], START_TIMERS)
   val game = ref[GameState](START_GAME)
 
   val keysPressed = emptyMap[String, Bool]()
   val mousePos = ref[Vec2d](NULL_VECTOR)
   val lastFrameTimeStamp = ref[Int](getTime())
-
-  val wave = ref[Int](START_WAVE)
-  val waveTimerMs = ref[Int](START_WAVE_TIMER)
-
-  val zombieTimerMs = ref[Int](ZOMBIE_SPAWN_INTERVAL)
 
   val RETRY_BUTTON_WIDTH = CANVAS_WIDTH / 4.0
   val RETRY_BUTTON_HEIGHT = CANVAS_HEIGHT / 6.0
@@ -111,7 +111,8 @@ def main(): Unit = {
         resume(())
       }
       def clear = { canvas.clear(); resume(()) }
-    } with Input {
+    } with getWave { resume(wave.get) }
+    with Input {
       def isPressed(key) = resume(keysPressed.get(key).getOrElse { false })
       def mousePos() = resume(mousePos.get)
     } with random {
@@ -119,16 +120,6 @@ def main(): Unit = {
     } with Screen {
       def width = resume(CANVAS_WIDTH)
       def height = resume(CANVAS_HEIGHT)
-    } with Timer {
-      def left() = resume(zombieTimerMs.get)
-      def reset() = {
-        zombieTimerMs.set(ZOMBIE_SPAWN_INTERVAL / wave.get)
-        resume(())
-      }
-      def change(by) = {
-        zombieTimerMs.map{t => t + by}
-        resume(())
-      }
     }
     
     requestIdleCallback(idleCallback)
@@ -156,11 +147,10 @@ def main(): Unit = {
           Rotate(Simple(bulletDrawable), gunAngle, Some(playerCenter)),
           Vec2d(1.0, 0.0).rotate(gunAngle)
         )
-        game.set(game.get.addObject(bullet))
+        game.map{g => g.addObject(bullet)}
       } else if (mousePos.get.isInside(RETRY_BUTTON.toHitbox())) {
         game.set(START_GAME)
         lastFrameTimeStamp.set(getTime())
-        zombieTimerMs.set(ZOMBIE_SPAWN_INTERVAL)
         wave.set(START_WAVE)
         waveTimerMs.set(START_WAVE_TIMER)
       }

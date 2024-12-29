@@ -46,7 +46,7 @@ def main(): Unit = {
   val START_WAVE_TIMER = 5 * SECOND
   val waveTimerMs = ref[Int](START_WAVE_TIMER)
 
-  val ZOMBIE_SPAWN_INTERVAL = SECOND
+  val ZOMBIE_SPAWN_INTERVAL = 1 * SECOND
   val zombieTimerMs = ref[Int](ZOMBIE_SPAWN_INTERVAL)
 
   val RETRY_BUTTON_WIDTH = CANVAS_WIDTH / 4.0
@@ -74,7 +74,7 @@ def main(): Unit = {
         val remaining = waveTimerMs.get - dt
         val nextWave = remaining < 0
         if (nextWave) {
-          wave.set(wave.get + 1)
+          wave.map{inc}
           waveTimerMs.set(remaining + START_WAVE_TIMER)
         } else waveTimerMs.set(remaining)
         val updatedGame = game.get.update(dt) 
@@ -135,7 +135,7 @@ def main(): Unit = {
         resume(())
       }
       def change(by) = {
-        zombieTimerMs.set(zombieTimerMs.get + by)
+        zombieTimerMs.map{t => t + by}
         resume(())
       }
     }

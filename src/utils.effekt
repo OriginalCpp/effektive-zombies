@@ -2,6 +2,10 @@ module utils
 
 effect random(): Double
 
+def map[T](ref: Ref[T]) { f: T => T }: Unit = ref.set(f(ref.get))
+
+def inc(x: Int): Int = x + 1
+
 def min(x: Double, y: Double): Double = if (x < y) x else y
 
 def clamp(toClamp: Double, lowerBound: Double, upperBound: Double): Double =

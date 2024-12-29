@@ -82,20 +82,19 @@ def gameSuite() = suite("game") {
 
   test("zombie shooting") {
     val SHOT_ZOMBIE_HITBOX = Simple(Rect(Vec2d(50.0, 50.0), 10.0, 10.0, Black()))
-    val SHOT_ZOMBIE = Zombie(
-      SHOT_ZOMBIE_HITBOX,
-      Vec2d(1.0, 1.0)
-    )
+    val SHOT_ZOMBIE = Zombie(SHOT_ZOMBIE_HITBOX, Vec2d(1.0, 1.0))
+
     val ALIVE_HITBOX = Simple(Rect(Vec2d(100.0, 100.0), 10.0, 10.0, Black()))
-    val ALIVE = Zombie(
-      ALIVE_HITBOX,
-      Vec2d(1.0, 1.0)
-    )
+    val ALIVE = Zombie(ALIVE_HITBOX, Vec2d(1.0, 1.0))
+
     val BULLET_HITBOX = Simple(Rect(Vec2d(40.0, 40.0), 20.0, 20.0, Black()))
-    val BULLET = Bullet(
-      BULLET_HITBOX,
-      Vec2d(1.0, 1.0)
-    )
+    val BULLET = Bullet(BULLET_HITBOX, Vec2d(1.0, 1.0))
+
+    val MISSING_HITBOX = Simple(Rect(Vec2d(80.0, 80.0), 10.0, 10.0, Black()))
+    val MISSING_BULLET = Bullet(MISSING_HITBOX, Vec2d(3.0, 3.0))
+
+    val OUT_OF_RANGE_HITBOX = Simple(Rect(Vec2d(200.0, 200.0), 10.0, 10.0, Black()))
+    val OUT_OF_RANGE = Bullet(OUT_OF_RANGE_HITBOX, Vec2d(2.0, 2.0))
 
     assertTrue(
       SHOT_ZOMBIE_HITBOX.collides(BULLET_HITBOX),
@@ -107,7 +106,24 @@ def gameSuite() = suite("game") {
       "Bullet should not collide with non-overlapping zombie"
     )
     
-    val remaining = shooting([SHOT_ZOMBIE, ALIVE, BULLET])
+    val (remaining, _) = try {
+      shooting(
+        [MISSING_BULLET, SHOT_ZOMBIE, OUT_OF_RANGE, ALIVE, BULLET]
+      )
+    } with Screen {
+      def width() = resume(100.0)
+      def height() = resume(100.0)
+    }
+
+    assertFalse(
+      remaining.contains(OUT_OF_RANGE){(a, b) => a.equals(b)},
+      "Bullet which leaved the screen was not removed"
+    )
+
+    assertTrue(
+      remaining.contains(MISSING_BULLET){(a, b) => a.equals(b)},
+      "Bullet that missed but is inside the screen was removed"
+    )
 
     assertTrue(
       remaining.contains(ALIVE){(a, b) => a.equals(b)},
@@ -117,6 +133,7 @@ def gameSuite() = suite("game") {
       remaining.contains(SHOT_ZOMBIE){(a, b) => a.equals(b)},
       "Shot zombie is not dead"
     )
+
     assertFalse(
       remaining.contains(BULLET){(a, b) => a.equals(b)},
       "Bullet that hit zombie is still in the game"

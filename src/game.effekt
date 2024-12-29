@@ -180,13 +180,13 @@ def update(game: GameState, dt: Int): GameState / { Input, random, Screen } = {
   val (updatedZombieTimer, spawnedZombie) = 
     try { game.timers.zombieTimer.timer(dt, Nil[GameObject]) }
     with elapsed[List[GameObject]] { 
-      resume((Timer(ZOMBIE_SPAWN_INTERVAL / game.wave), [spawnZombie(game)]))
+      (Timer(ZOMBIE_SPAWN_INTERVAL / game.wave), [spawnZombie(game)])
     }
   
   val (updatedWaveTimer, updatedWave) = 
     try { game.timers.waveTimer.timer[Int](dt, game.wave) }
     with elapsed[Int] {
-      resume((Timer(START_WAVE_TIMER), inc(game.wave)))
+      (Timer(START_WAVE_TIMER), inc(game.wave))
     }
 
   val (inRange, outOfRange) = objects.partition {

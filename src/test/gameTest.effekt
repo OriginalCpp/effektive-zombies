@@ -9,11 +9,13 @@ import src/shapes/manipulated
 import src/shapes/simple
 
 def gameSuite() = suite("game") {
-  val player = Player(
-    Circle(Vec2d(30.0, 30.0), 50.0, Green()),
-    Rect(Vec2d(80.0, 25.0), 10.0, 10.0, Black()), 1, 1.0
+  val DUMMY_PLAYER = Player(
+    Circle(NULL_VECTOR, 0.0, Green()),
+    Rect(NULL_VECTOR, 0.0, 0.0, Black()), 0, 0.0
   )
-  val game = GameState(player, [])
+  val DUMMY_TIMER = Timer(0)
+  val DUMMY_TIMERS = GameTimer(DUMMY_TIMER, DUMMY_TIMER)
+  val DUMMYGAME = GameState(DUMMY_PLAYER, [], DUMMY_TIMERS, 0)
 
   def pseudoHandler { f: () => Unit / {Input, random, Screen} }: Unit = {
     try { f() }
@@ -22,10 +24,8 @@ def gameSuite() = suite("game") {
       def height = resume(0.0)
     } with Input {
       def isPressed(key) = resume(false)
-      def mousePos() = resume(Vec2d(0.0, 0.0))
-    } with random {
-      resume(0.0)
-    }
+      def mousePos() = resume(NULL_VECTOR)
+    } with random { resume(0.0) }
   }
 
   test("playerMovement") {
@@ -55,44 +55,29 @@ def gameSuite() = suite("game") {
     assertV(NULL_VECTOR)
   }
 
-  test("zombie spawn") {
-    val dt = 12
-    var timer = 10
-    with pseudoHandler
-    try { game.update(dt) }
-    with Timer {
-      def left() = resume(timer)
-      def reset() = {
-        timer = 10
-        resume(())
-      }
-      def change(by) = {
-        timer = timer + by
-        resume(())
-      }
+  test("timer") {
+    var timer = Timer(10)
+    val nonElapsing = [0, 1, 2, 3]
+    val notElapsed = nonElapsing.map { dt => 
+      try { 
+        val (newTimer, _) = timer.timer(dt, ())
+        timer = newTimer 
+        true
+      } with elapsed[Unit] { false }
     }
 
-    assert(timer, 8)
-  }
+    assertTrue(notElapsed.all{ x => x })
+    assertEqual(timer, Timer(4))
 
-  test("no zombie spawn") {
-    val dt = 5
-    var timer = 8
-    with pseudoHandler
-    try { game.update(dt) }
-    with Timer {
-      def left() = resume(timer)
-      def reset() = {
-        timer = 10
-        resume(())
-      }
-      def change(by) = {
-        timer = timer + by
-        resume(())
-      }
+    val elapsing = [4, 5]
+    val elapsed = elapsing.map { dt =>
+      try {
+        timer.timer(dt, ())
+        false
+      } with elapsed[Unit] { true }
     }
 
-    assert(timer, 3)
+    assertTrue(elapsed.all{ x => x })
   }
 
   test("zombie shooting") {

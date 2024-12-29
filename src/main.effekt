@@ -39,7 +39,14 @@ def main(): Unit = {
   val mousePos = ref[Vec2d](NULL_VECTOR)
   val lastFrameTimeStamp = ref[Int](getTime())
 
-  val ZOMBIE_SPAWN_INTERVAL = 1000
+  val SECOND = 1000
+
+  val START_WAVE = 1
+  val wave = ref[Int](START_WAVE)
+  val START_WAVE_TIMER = 5 * SECOND
+  val waveTimerMs = ref[Int](START_WAVE_TIMER)
+
+  val ZOMBIE_SPAWN_INTERVAL = SECOND
   val zombieTimerMs = ref[Int](ZOMBIE_SPAWN_INTERVAL)
 
   val RETRY_BUTTON_WIDTH = CANVAS_WIDTH / 4.0
@@ -63,7 +70,14 @@ def main(): Unit = {
   def idleCallback(deadline: IdleDeadline): Unit = {
     try {
       if (game.get.player.isAlive) {
-        val updatedGame = game.get.update(timeSinceLastFrame()) 
+        val dt = timeSinceLastFrame()
+        val remaining = waveTimerMs.get - dt
+        val nextWave = remaining < 0
+        if (nextWave) {
+          wave.set(wave.get + 1)
+          waveTimerMs.set(remaining + START_WAVE_TIMER)
+        } else waveTimerMs.set(remaining)
+        val updatedGame = game.get.update(dt) 
         render(updatedGame)
         game.set(updatedGame)
       } else {
@@ -117,7 +131,7 @@ def main(): Unit = {
     } with Timer {
       def left() = resume(zombieTimerMs.get)
       def reset() = {
-        zombieTimerMs.set(ZOMBIE_SPAWN_INTERVAL)
+        zombieTimerMs.set(ZOMBIE_SPAWN_INTERVAL / wave.get)
         resume(())
       }
       def change(by) = {
@@ -156,6 +170,8 @@ def main(): Unit = {
         game.set(START_GAME)
         lastFrameTimeStamp.set(getTime())
         zombieTimerMs.set(ZOMBIE_SPAWN_INTERVAL)
+        wave.set(START_WAVE)
+        waveTimerMs.set(START_WAVE_TIMER)
       }
     }
   }

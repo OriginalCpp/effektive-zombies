@@ -71,9 +71,11 @@ def spawnZombie(game: GameState): GameObject / { Screen, random } = {
     case Left() => Vec2d(0.0, r * h)
     case Top() => Vec2d(r * w, 0.0)
   }
-  val player = game.player
-  val zombieSize = h / 15.0
-  val zombie = Zombie(Simple(Circle(zombiePos, zombieSize, Black())), Vec2d(0.3, 0.0))
+  val zombieSize = h / CANVAS_ZOMBIE_FACTOR
+  val zombie = Zombie(
+    Simple(Circle(zombiePos, zombieSize, Black())),
+    Vec2d(ZOMBIE_BASE_SPEED, 0.0)
+  )
   zombie
 }
 

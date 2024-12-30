@@ -2,6 +2,7 @@ module gameTest
 
 import test
 import mutable/map
+import src/game/constants
 import src/game/player
 import src/game/gametimer
 import src/game/game
@@ -26,8 +27,8 @@ def gameSuite() = suite("game") {
   def pseudoHandler { f: () => Unit / {Input, random, Screen} }: Unit = {
     try { f() }
     with Screen {
-      def width = resume(0.0)
-      def height = resume(0.0)
+      def width = resume(0)
+      def height = resume(0)
     } with Input {
       def isPressed(key) = resume(false)
       def mousePos() = resume(NULL_VECTOR)
@@ -125,8 +126,8 @@ def gameSuite() = suite("game") {
         [MISSING_BULLET, SHOT_ZOMBIE, OUT_OF_RANGE, ALIVE, BULLET]
       )
     } with Screen {
-      def width() = resume(100.0)
-      def height() = resume(100.0)
+      def width() = resume(100)
+      def height() = resume(100)
     }
 
     assert(dead, 1, "Shooting should signal that exactly one zombie died")

@@ -16,8 +16,19 @@ import src/utils
 import src/vec2d
 
 def main(): Unit = {
-  val canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
-  val game = ref[GameState](START_GAME)
+  val canvasWidth = ref[Int](innerWidth())
+  val canvasHeight = ref[Int](innerHeight())
+  val canvas = createCanvas(canvasWidth.get, canvasHeight.get)
+
+  def screen[T] { f: () => T / Screen }: T = {
+    try { f() }
+    with Screen {
+      def width = resume(canvasWidth.get)
+      def height = resume(canvasHeight.get)
+    }
+  }
+
+  val game = screen { ref[GameState](startGame()) }
 
   val keysPressed = emptyMap[String, Bool]()
   val mousePos = ref[Vec2d](NULL_VECTOR)
@@ -31,6 +42,7 @@ def main(): Unit = {
   }
 
   def idleCallback(deadline: IdleDeadline): Unit = {
+    with screen;
     try {
       val dt = timeSinceLastFrame()
       if (game.get.player.isAlive) {
@@ -40,8 +52,9 @@ def main(): Unit = {
       } else {
         println(show(game.get.score))
         renderDeathScreen()
-        do draw(Simple(RETRY_BUTTON))
-        do write(RETRY_TEXT)
+        val (button, text) = retryButton()
+        do draw(Simple(button))
+        do write(text)
       }
     } with Canvas {
       def draw(drawable) = {
@@ -83,9 +96,6 @@ def main(): Unit = {
       def mousePos() = resume(mousePos.get)
     } with random {
       resume(random())
-    } with Screen {
-      def width = resume(CANVAS_WIDTH)
-      def height = resume(CANVAS_HEIGHT)
     }
     
     requestIdleCallback(idleCallback)
@@ -102,9 +112,11 @@ def main(): Unit = {
     mousePos.set(Vec2d(x, y))
   }
   def mouseDownHandler(event: Event): Unit = {
+    with screen;
     val leftButtonPressed = event.getButton() == 0
     if (leftButtonPressed) {
       val player = game.get.player
+      val (retryButton, _) = retryButton()
       if (player.isAlive()) {
         val playerCenter = player.drawable.getCenter()
         val gunAngle = angleClockwise(mousePos.get - playerCenter)
@@ -114,16 +126,25 @@ def main(): Unit = {
           Vec2d(1.0, 0.0).rotate(gunAngle)
         )
         game.map{g => g.addObject(bullet)}
-      } else if (mousePos.get.isInside(RETRY_BUTTON.toHitbox())) {
-        game.set(START_GAME)
+      } else if (mousePos.get.isInside(retryButton.toHitbox())) {
+        game.set(startGame())
       }
     }
+  }
+
+  def resizeHandler(event: Event): Unit = {
+    val newWidth = innerWidth()
+    val newHeight = innerHeight()
+    canvasWidth.set(newWidth)
+    canvasHeight.set(newHeight)
+    canvas.resize(newWidth, newHeight)
   }
 
   addEventListener(KEY_DOWN, pressedHandler)
   addEventListener(KEY_UP, releasedHandler)
   addEventListener(MOUSE_MOVE, mouseMoveHandler)
   addEventListener(MOUSE_DOWN, mouseDownHandler)
+  addEventListener(RESIZE, resizeHandler)
 
   requestIdleCallback(idleCallback)
 }

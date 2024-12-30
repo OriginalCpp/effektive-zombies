@@ -24,17 +24,14 @@ interface Input {
   def mousePos(): Vec2d
 }
 
-interface Screen {
-  def width(): Double
-  def height(): Double
-}
-
 def visible(d: ManipulatedDrawable): Bool / Screen = 
-  collides(d, Simple(Rect(NULL_VECTOR, do width(), do height(), Black())))
+  collides(
+    d, Simple(Rect(NULL_VECTOR, do width().toDouble, do height().toDouble, Black()))
+  )
 
 def keepInsideScreen(player: Player): Player / Screen = {
-  val screenW = do width()
-  val screenH = do height()
+  val screenW = do width().toDouble
+  val screenH = do height().toDouble
   val playerCenter = player.drawable.getCenter()
   val centerInside = Vec2d(
     playerCenter.x.clamp(0.0, screenW),
@@ -59,8 +56,8 @@ type Side {
 val SIDES = [Top(), Right(), Bottom(), Left()]
 
 def spawnZombie(game: GameState): GameObject / { Screen, random } = {
-  val w = do width()
-  val h = do height()
+  val w = do width().toDouble
+  val h = do height().toDouble
   val totalScreenEdge = 2.0 * w + 2.0 * h
   val sideProbs = [w, h, w, h].map {side => side / totalScreenEdge}
   val spawnSide = SIDES.choose(sideProbs).getOrElse{Right()}
@@ -193,8 +190,8 @@ def render(game: GameState): Unit / { Canvas, Input } = {
 }
 
 def renderDeathScreen(): Unit / { Canvas, Screen } = {
-  val w = do width()
-  val h = do height()
+  val w = do width().toDouble
+  val h = do height().toDouble
   val center = Vec2d(w / 2.0, h / 2.0)
 
   val background = Simple(Rect(NULL_VECTOR, w, h, Black()))

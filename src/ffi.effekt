@@ -16,7 +16,7 @@ def getElementById(id: String): Option[Node] = {
 extern type Event
 
 extern io def addEventListener(eventType: String, callback: Event => Unit at {io, global}): Unit =
-  jsWeb """document.addEventListener(${eventType}, 
+  jsWeb """document.defaultView.addEventListener(${eventType}, 
            (event) => $effekt.runToplevel((ks, k) => ${callback}(event, ks, k)))"""
 
 extern pure def getKey(event: Event): String =
@@ -32,7 +32,7 @@ extern io def getButton(event: Event): Int =
   jsWeb "${event}.button"
 
 
-extern io def createCanvas(width: Double, height: Double): Node =
+extern io def createCanvas(width: Int, height: Int): Node =
   jsWeb """(function(){
   canvas = document.createElement("canvas");
   canvas.id = "canvas";
@@ -44,6 +44,10 @@ extern io def createCanvas(width: Double, height: Double): Node =
   return canvas;
   })()
   """
+
+extern io def resize(canvas: Node, width: Int, height: Int): Unit =
+  jsWeb """canvas.width = ${width}
+           canvas.height = ${height}"""
 
 extern io def drawRect(
   canvas: Node, x: Double, y: Double, 
@@ -102,3 +106,8 @@ extern io def requestIdleCallback(callback: (IdleDeadline) => Unit at {io, globa
   jsWeb "window.requestIdleCallback(deadline => $effekt.runToplevel((ks, k) => ${callback}(deadline, ks, k)))"
 
 extern io def getTime(): Int = jsWeb "Date.now()"
+
+extern pure def innerWidth(): Int = 
+    jsWeb "window.innerWidth"
+extern pure def innerHeight(): Int = 
+  jsWeb "window.innerHeight"

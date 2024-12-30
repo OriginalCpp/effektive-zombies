@@ -81,6 +81,14 @@ def gameSuite() = suite("game") {
     assertTrue(elapsed.all{ x => x })
   }
 
+  test("score update") {
+    val killed3Score = DUMMY_SCORE.update(false, 3)
+    val breakScore = killed3Score.update(true, 0)
+    val updatedScore = breakScore.update(false, 2)
+
+    assertEqual(updatedScore, Score(9, 2, 3))
+  }
+
   test("zombie shooting") {
     val SHOT_ZOMBIE_HITBOX = Simple(Rect(Vec2d(50.0, 50.0), 10.0, 10.0, Black()))
     val SHOT_ZOMBIE = Zombie(SHOT_ZOMBIE_HITBOX, Vec2d(1.0, 1.0))

@@ -1,9 +1,9 @@
 module main
 
 import mutable/map
-import src/shapes/hitbox
-import src/shapes/manipulated
-import src/shapes/simple
+import src/drawable/hitbox
+import src/drawable/manipulated
+import src/drawable/simple
 import src/game/constants
 import src/game/game
 import src/game/gameobject
@@ -11,7 +11,7 @@ import src/game/gamestate
 import src/game/player
 import src/game/score
 import src/ffi
-import src/text
+import src/drawable/text
 import src/utils
 import src/vec2d
 
@@ -99,6 +99,7 @@ def main(): Unit = {
     keysPressed.update(event.getKey(), false)
 
   def mouseMoveHandler(event: Event): Unit = {
+    //TODO: Implement adjustment to canvas centering
     val xRatio = GAME_WIDTH.toDouble / displayedWidth.get.toDouble 
     val yRatio = GAME_HEIGHT.toDouble / displayedHeight.get.toDouble
     val x = event.getClientX() * xRatio

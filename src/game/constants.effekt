@@ -4,9 +4,9 @@ import src/game/score
 import src/game/gamestate
 import src/game/gametimer
 import src/game/player
-import src/shapes/simple
-import src/shapes/manipulated
-import src/text
+import src/drawable/simple
+import src/drawable/manipulated
+import src/drawable/text
 import src/utils
 import src/vec2d
 

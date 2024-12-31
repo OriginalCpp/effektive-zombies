@@ -51,11 +51,13 @@ def main(): Unit = {
         def drawSimple(d: SimpleDrawable): Unit = d match {
           case Rect(upperLeft, width, height, color) =>
             ctx.get.drawRect(
-              upperLeft.x, upperLeft.y, 
-              width, height, show(color)
+              upperLeft.x.toInt, upperLeft.y.toInt, 
+              width.toInt, height.toInt, show(color)
             )
           case Circle(center, radius, color) =>
-            ctx.get.drawCircle(center.x, center.y, radius, show(color))
+            ctx.get.drawCircle(
+              center.x.toInt, center.y.toInt, radius.toInt, show(color)
+            )
         }
 
         def unwrapDraw(d: ManipulatedDrawable): Unit = d match {
@@ -63,7 +65,7 @@ def main(): Unit = {
           case Rotate(inner, rotation, relativeTo) =>
             val oldMatrix = ctx.get.getTransform()
             val realRelative = relativeTo.getOrElse { inner.getCenter() }
-            ctx.get.setupRotation(rotation, realRelative.x, realRelative.y)
+            ctx.get.setupRotation(rotation, realRelative.x.toInt, realRelative.y.toInt)
             unwrapDraw(inner)
             ctx.get.setTransform(oldMatrix)
           case Compose(first, second) =>
@@ -74,7 +76,7 @@ def main(): Unit = {
       }
       def write(text) = {
         ctx.get.drawText(
-          text.text, text.position.x, text.position.y,
+          text.text, text.position.x.toInt, text.position.y.toInt,
           show(text.fontSizePX) ++ "px " ++ show(text.fontType), 
           show(text.alignment), show(text.baseline), show(text.color)
         )

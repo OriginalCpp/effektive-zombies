@@ -64,15 +64,15 @@ extern io def resizeCanvas(width: Int, height: Int): Context2D =
   """
 
 extern io def drawRect(
-  ctx: Context2D, x: Double, y: Double, 
-  width: Double, height: Double, color: String
+  ctx: Context2D, x: Int, y: Int, 
+  width: Int, height: Int, color: String
 ): Unit =
   jsWeb """${ctx}.fillStyle = ${color}; 
            ${ctx}.fillRect(${x}, ${y}, ${width}, ${height});"""
 
 extern io def drawCircle(
-  ctx: Context2D, x: Double, y: Double, 
-  radius: Double, color: String
+  ctx: Context2D, x: Int, y: Int, 
+  radius: Int, color: String
 ): Unit =
   jsWeb """${ctx}.fillStyle = ${color};
            ${ctx}.beginPath();
@@ -87,7 +87,7 @@ extern io def clear(ctx: Context2D): Unit =
 
 extern io def drawText(
   ctx: Context2D, text: String,
-  x: Double, y: Double, font: String, 
+  x: Int, y: Int, font: String, 
   alignment: String, baseline: String, color: String
 ): Unit =
   jsWeb """${ctx}.font = ${font};
@@ -100,7 +100,7 @@ extern io def drawText(
 //relative to the given coordinates
 extern io def setupRotation(
   ctx: Context2D, angle: Double, 
-  relativeToX: Double, relativeToY: Double
+  relativeToX: Int, relativeToY: Int
 ): Unit =
   jsWeb """${ctx}.translate(${relativeToX}, ${relativeToY});
            ${ctx}.rotate(${angle});

@@ -4,6 +4,7 @@ import mutable/map
 import src/drawable/hitbox
 import src/drawable/manipulated
 import src/drawable/simple
+import src/drawable/image
 import src/game/constants
 import src/game/game
 import src/game/gameobject
@@ -35,12 +36,21 @@ def main(): Unit = {
     timeElapsed
   }
 
+  val SCORE_IMAGE = Image(loadImage("../assets/score.png"), NULL_VECTOR)
+
   def idleCallback(deadline: IdleDeadline): Unit = {
     try {
       val dt = timeSinceLastFrame()
       if (game.get.player.isAlive) {
         val updatedGame = game.get.update(dt) 
         render(updatedGame)
+        if (SCORE_IMAGE.image.isLoaded()) {
+          ctx.get.drawImage(
+            SCORE_IMAGE.image,
+            SCORE_IMAGE.position.x.toInt,
+            SCORE_IMAGE.position.y.toInt
+          )
+        }
         game.set(updatedGame)
       } else {
         println(show(game.get.score))

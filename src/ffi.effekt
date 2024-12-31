@@ -114,6 +114,21 @@ extern io def getTransform(ctx: Context2D): DOMMatrix =
 extern io def setTransform(ctx: Context2D, matrix: DOMMatrix): Unit =
   jsWeb "${ctx}.setTransform(${matrix});"
 
+extern type HTMLImage
+
+extern io def loadImage(path: String): HTMLImage = 
+  jsWeb """(function(){
+  image = new Image();
+  image.src = ${path};
+  return image;
+  })()"""
+
+extern io def isLoaded(image: HTMLImage): Bool =
+  jsWeb "${image}.complete"
+
+extern io def drawImage(ctx: Context2D, image: HTMLImage, dx: Int, dy: Int): Unit =
+  jsWeb "${ctx}.drawImage(${image}, ${dx}, ${dy})"
+
 extern type IdleDeadline
 
 extern io def requestIdleCallback(callback: (IdleDeadline) => Unit at {io, global}): Unit =

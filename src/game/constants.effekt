@@ -17,6 +17,11 @@ interface Screen {
 def screenCenter(): Vec2d / Screen = 
   Vec2d(do width().toDouble / 2.0, do height().toDouble / 2.0)
 
+val ASPECT_RATIO = 16.0 / 9.0
+
+val GAME_WIDTH = 384
+val GAME_HEIGHT = (GAME_WIDTH.toDouble / ASPECT_RATIO).toInt()
+
 val SECOND_IN_MS = 1000
 
 //------------------- Events -------------------

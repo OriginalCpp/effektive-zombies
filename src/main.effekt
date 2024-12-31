@@ -17,7 +17,9 @@ import src/vec2d
 
 def main(): Unit = {
   createCanvas(GAME_WIDTH, GAME_HEIGHT)
-  val ctx = ref[Context2D](resizeCanvas(windowWidth(), windowHeight()))
+  val displayedWidth = ref[Int](windowWidth())
+  val displayedHeight = ref[Int](windowHeight())
+  val ctx = ref[Context2D](resizeCanvas(displayedWidth.get, displayedHeight.get))
 
   def screen[T] { f: () => T / Screen }: T = {
     try { f() }
@@ -106,8 +108,10 @@ def main(): Unit = {
     keysPressed.update(event.getKey(), false)
 
   def mouseMoveHandler(event: Event): Unit = {
-    val x = event.getClientX()
-    val y = event.getClientY()
+    val xRatio = GAME_WIDTH.toDouble / displayedWidth.get.toDouble 
+    val yRatio = GAME_HEIGHT.toDouble / displayedHeight.get.toDouble
+    val x = event.getClientX() * xRatio
+    val y = event.getClientY() * yRatio
     mousePos.set(Vec2d(x, y))
   }
   def mouseDownHandler(event: Event): Unit = {
@@ -134,6 +138,8 @@ def main(): Unit = {
   def resizeHandler(event: Event): Unit = {
     val newWidth = windowWidth()
     val newHeight = windowHeight()
+    displayedWidth.set(newWidth)
+    displayedHeight.set(newHeight)
     ctx.set(resizeCanvas(newWidth, newHeight))
   }
 

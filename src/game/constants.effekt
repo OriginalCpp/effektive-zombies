@@ -12,6 +12,14 @@ import src/vec2d
 
 val ASPECT_RATIO = 16.0 / 9.0
 
+def fittingSizes(width: Int, height: Int): (Int, Int) = {
+  if(height.toDouble * ASPECT_RATIO > width.toDouble) {
+    (width, (width.toDouble / ASPECT_RATIO).toInt)
+  } else {
+    ((height.toDouble * ASPECT_RATIO).toInt, height)
+  }
+}
+
 val GAME_WIDTH = 384
 val GAME_HEIGHT = (GAME_WIDTH.toDouble / ASPECT_RATIO).toInt()
 val GAME_CENTER = fromInt(GAME_WIDTH / 2, GAME_HEIGHT / 2)

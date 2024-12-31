@@ -17,8 +17,9 @@ import src/vec2d
 
 def main(): Unit = {
   createCanvas(GAME_WIDTH, GAME_HEIGHT)
-  val displayedWidth = ref[Int](windowWidth())
-  val displayedHeight = ref[Int](windowHeight())
+  val (dW, dH) = fittingSizes(windowWidth(), windowHeight()) 
+  val displayedWidth = ref[Int](dW)
+  val displayedHeight = ref[Int](dH)
   val ctx = ref[Context2D](resizeCanvas(displayedWidth.get, displayedHeight.get))
 
   val game = ref[GameState](START_GAME)
@@ -122,8 +123,7 @@ def main(): Unit = {
   }
 
   def resizeHandler(event: Event): Unit = {
-    val newWidth = windowWidth()
-    val newHeight = windowHeight()
+    val (newWidth, newHeight) = fittingSizes(windowWidth(), windowHeight())
     displayedWidth.set(newWidth)
     displayedHeight.set(newHeight)
     ctx.set(resizeCanvas(newWidth, newHeight))

@@ -45,8 +45,9 @@ extern io def createCanvas(width: Int, height: Int): Context2D =
   canvas.height = ${height};
   //https://stackoverflow.com/a/7782251/15982248
   canvas.style.position = "absolute";
-  canvas.style.top = 0;
-  canvas.style.left = 0;
+  canvas.style.top = '50%';
+  canvas.style.left = '50%';
+  canvas.style.transform = 'translate(-50%, -50%)';
   canvas.style.setProperty("image-rendering", "pixelated");
   $resize(canvas, ${width}, ${height});
   document.body.appendChild(canvas);

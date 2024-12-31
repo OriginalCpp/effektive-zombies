@@ -21,15 +21,7 @@ def main(): Unit = {
   val displayedHeight = ref[Int](windowHeight())
   val ctx = ref[Context2D](resizeCanvas(displayedWidth.get, displayedHeight.get))
 
-  def screen[T] { f: () => T / Screen }: T = {
-    try { f() }
-    with Screen {
-      def width = resume(GAME_WIDTH)
-      def height = resume(GAME_HEIGHT)
-    }
-  }
-
-  val game = screen { ref[GameState](startGame()) }
+  val game = ref[GameState](START_GAME)
 
   val keysPressed = emptyMap[String, Bool]()
   val mousePos = ref[Vec2d](NULL_VECTOR)
@@ -43,7 +35,6 @@ def main(): Unit = {
   }
 
   def idleCallback(deadline: IdleDeadline): Unit = {
-    with screen;
     try {
       val dt = timeSinceLastFrame()
       if (game.get.player.isAlive) {
@@ -53,9 +44,6 @@ def main(): Unit = {
       } else {
         println(show(game.get.score))
         renderDeathScreen()
-        val (button, text) = retryButton()
-        do draw(Simple(button))
-        do write(text)
       }
     } with Canvas {
       def draw(drawable) = {
@@ -115,22 +103,20 @@ def main(): Unit = {
     mousePos.set(Vec2d(x, y))
   }
   def mouseDownHandler(event: Event): Unit = {
-    with screen;
     val leftButtonPressed = event.getButton() == 0
     if (leftButtonPressed) {
       val player = game.get.player
-      val (retryButton, _) = retryButton()
       if (player.isAlive()) {
         val playerCenter = player.drawable.getCenter()
         val gunAngle = angleClockwise(mousePos.get - playerCenter)
         val bulletDrawable = player.gun.changeColor(Black())
         val bullet = Bullet(
           Rotate(Simple(bulletDrawable), gunAngle, Some(playerCenter)),
-          Vec2d(1.0, 0.0).rotate(gunAngle)
+          Vec2d(BULLET_SPEED, 0.0).rotate(gunAngle)
         )
         game.map{g => g.addObject(bullet)}
-      } else if (mousePos.get.isInside(retryButton.toHitbox())) {
-        game.set(startGame())
+      } else if (mousePos.get.isInside(RETRY_BUTTON.toHitbox())) {
+        game.set(START_GAME)
       }
     }
   }

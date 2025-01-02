@@ -44,13 +44,7 @@ def main(): Unit = {
       if (game.get.player.isAlive) {
         val updatedGame = game.get.update(dt) 
         render(updatedGame)
-        if (SCORE_IMAGE.image.isLoaded()) {
-          ctx.get.drawImage(
-            SCORE_IMAGE.image,
-            SCORE_IMAGE.position.x.toInt,
-            SCORE_IMAGE.position.y.toInt
-          )
-        }
+        do drawImage(SCORE_IMAGE)
         game.set(updatedGame)
       } else {
         println(show(game.get.score))
@@ -90,6 +84,16 @@ def main(): Unit = {
           show(text.fontSizePX) ++ "px " ++ show(text.fontType), 
           show(text.alignment), show(text.baseline), show(text.color)
         )
+        resume(())
+      }
+      def drawImage(image) = {
+        if (image.image.isLoaded()) {
+          ctx.get.drawImage(
+            image.image,
+            image.position.x.toInt,
+            image.position.y.toInt
+          )
+        }
         resume(())
       }
       def clear = { ctx.get.clear(); resume(()) }

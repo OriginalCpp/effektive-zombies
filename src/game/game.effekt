@@ -11,11 +11,13 @@ import src/drawable/text
 import src/utils
 import src/vec2d
 import src/drawable/manipulated
+import src/drawable/image
 import src/drawable/simple
 
 interface Canvas {
   def draw(drawable: ManipulatedDrawable): Unit
   def write(text: Text): Unit
+  def drawImage(image: Image): Unit
   def clear(): Unit
 }
 

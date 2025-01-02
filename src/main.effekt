@@ -36,7 +36,9 @@ def main(): Unit = {
     timeElapsed
   }
 
-  val SCORE_IMAGE = Image(loadImage("../assets/score.png"), NULL_VECTOR)
+  val loadedImages = imagesToLoad.map { 
+    case (key, (path, pos)) => (key, Image(loadImage(path), pos)) 
+  }
 
   def idleCallback(deadline: IdleDeadline): Unit = {
     try {
@@ -44,7 +46,8 @@ def main(): Unit = {
       if (game.get.player.isAlive) {
         val updatedGame = game.get.update(dt) 
         render(updatedGame)
-        do drawImage(SCORE_IMAGE)
+        with on[OutOfBounds].ignore
+        do drawImage(loadedImages.Immutable::get(SCORE_KEY))
         game.set(updatedGame)
       } else {
         println(show(game.get.score))

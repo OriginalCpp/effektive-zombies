@@ -73,6 +73,11 @@ val START_TIMERS = GameTimer(
 val START_GAME = GameState(START_PLAYER, [], START_TIMERS, START_WAVE, START_SCORE)
 
 //------------------- UI -------------------
+type Path = String
+val SCORE_KEY = "score"
+val imagesToLoad = Immutable::emptyMap[String, (Path, Vec2d)]()
+                  .Immutable::update(SCORE_KEY, ("../assets/score.png", NULL_VECTOR))
+
 val DEATH_BACKGROUND = 
   Simple(Rect(NULL_VECTOR, GAME_WIDTH.toDouble, GAME_HEIGHT.toDouble, Black()))
 

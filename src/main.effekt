@@ -113,12 +113,17 @@ def main(): Unit = {
     keysPressed.update(event.getKey(), false)
 
   def mouseMoveHandler(event: Event): Unit = {
-    //TODO: Implement adjustment to canvas centering
-    val xRatio = GAME_WIDTH.toDouble / displayedWidth.get.toDouble 
-    val yRatio = GAME_HEIGHT.toDouble / displayedHeight.get.toDouble
-    val x = event.getClientX() * xRatio
-    val y = event.getClientY() * yRatio
-    mousePos.set(Vec2d(x, y))
+    val mousePosInWindow = Vec2d(event.getClientX(), event.getClientY())
+    val displayedSizes = fromInt(displayedWidth.get, displayedHeight.get)
+    val canvasOriginRelativeToWindow = Vec2d(
+      (windowWidth().toDouble - displayedSizes.x) / 2.0,
+      (windowHeight().toDouble - displayedSizes.y) / 2.0
+    )
+    val xRatio = GAME_WIDTH.toDouble / displayedSizes.x
+    val yRatio = GAME_HEIGHT.toDouble / displayedSizes.y
+    val mousePosInGame = 
+      (mousePosInWindow - canvasOriginRelativeToWindow) * Vec2d(xRatio, yRatio)
+    mousePos.set(mousePosInGame)
   }
   def mouseDownHandler(event: Event): Unit = {
     val leftButtonPressed = event.getButton() == 0

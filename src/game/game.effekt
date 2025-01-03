@@ -194,18 +194,22 @@ def render(game: GameState): Unit / { Canvas, Input } = {
 }
 
 def renderUI(game: GameState): Unit / Canvas = {
-  val rawScoreDigits = digits(game.score.score)
-  val scoreDigits = fill(SCORE_DIGITS - rawScoreDigits.size(), 0)
-                   .append(rawScoreDigits.take(SCORE_DIGITS))
-  drawDigits(scoreDigits)
+  val scoreDigits = digits(game.score.score)
   do drawImageWithName(SCORE_KEY, SCORE_POS)
+  drawDigits(scoreDigits, SCORE_DIGITS, SCORE_POS + fromInt(SCORE_WIDTH, 0))
+
+  val waveDigits = digits(game.wave)
+  do drawImageWithName(WAVE_KEY, WAVE_POS)
+  drawDigits(waveDigits, WAVE_DIGITS, WAVE_POS + fromInt(WAVE_WIDTH, 0))
 }
 
-def drawDigits(digits: List[Int]): Unit / Canvas = {
-  var pos = SCORE_POS + fromInt(SCORE_WIDTH, 0)
+def drawDigits(rawDigits: List[Int], howMany: Int, startingWhere: Vec2d): Unit / Canvas = {
+  var digitPos = startingWhere
+  val digits = fill(howMany - rawDigits.size(), 0)
+              .append(rawDigits.take(SCORE_DIGITS))
   digits.foreach { digit =>
-    do drawImageWithName(show(digit), pos)
-    pos = pos + fromInt(DIGIT_WIDTH, 0)
+    do drawImageWithName(show(digit), digitPos)
+    digitPos = digitPos + fromInt(DIGIT_WIDTH, 0)
   }
 }
 

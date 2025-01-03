@@ -77,12 +77,17 @@ val START_GAME = GameState(START_PLAYER, [], START_TIMERS, START_WAVE, START_SCO
 val SCORE_DIGITS = 6
 val DIGIT_WIDTH = 16
 val SCORE_WIDTH = 4 * 16
-val SCORE_POS = fromInt(GAME_WIDTH - SCORE_WIDTH - SCORE_DIGITS * DIGIT_WIDTH, 0) 
+val SCORE_POS = fromInt(GAME_WIDTH - SCORE_WIDTH - SCORE_DIGITS * DIGIT_WIDTH, 0)
+
+val WAVE_DIGITS = 2
+val WAVE_WIDTH = 16
+val WAVE_POS = NULL_VECTOR
 
 type Path = String
 val ASSET_PATH = "../assets/"
 val NUMBER_PATH = ASSET_PATH ++ "numbers/"
 val SCORE_KEY = "score"
+val WAVE_KEY = "wave"
 val ZERO_KEY = "0"
 val ONE_KEY = "1"
 val TWO_KEY = "2"
@@ -95,6 +100,7 @@ val EIGHT_KEY = "8"
 val NINE_KEY = "9"
 val imagesToLoad = Immutable::emptyMap[String, Path]()
                   .Immutable::update(SCORE_KEY, "score.png")
+                  .Immutable::update(WAVE_KEY, "wave.png")
                   .Immutable::update(ZERO_KEY, "digit/0.png")
                   .Immutable::update(ONE_KEY, "digit/1.png")
                   .Immutable::update(TWO_KEY, "digit/2.png")

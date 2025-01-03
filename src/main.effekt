@@ -88,7 +88,7 @@ def main(): Unit = {
         resume(())
       }
       def drawImageWithName(imageName, pos) = {
-        with on[MissingValue].panic
+        with on[MissingValue].report
         val loadedImage = loadedImages.Immutable::get(imageName)
         if (loadedImage.isLoaded()) {
           ctx.get.drawImage(

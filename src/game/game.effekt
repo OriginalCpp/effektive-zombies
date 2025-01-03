@@ -209,6 +209,10 @@ def renderUI(game: GameState): Unit / Canvas = {
   val waveDigits = digits(game.wave)
   do drawImageWithName(WAVE_KEY, WAVE_POS)
   drawDigits(waveDigits, WAVE_DIGITS, WAVE_POS + fromInt(WAVE_WIDTH, 0))
+
+  val life = game.player.health
+  val hearts = fill(life, HEART_KEY)
+  hearts.nextToEachOther(LIFE_POS, HEART_WIDTH + HEART_PADDING)
 }
 
 def drawDigits(rawDigits: List[Int], howMany: Int, startingWhere: Vec2d): Unit / Canvas = {
@@ -224,14 +228,19 @@ def drawDigits(rawDigits: List[Int], howMany: Int, startingWhere: Vec2d): Unit /
     case 8 => EIGHT_KEY
     case _ => NINE_KEY
   }
-  var digitPos = startingWhere
   val digits = fill(howMany - rawDigits.size(), 0)
               .append(rawDigits.take(SCORE_DIGITS))
-  digits.foreach { digit =>
-    do drawImageWithName(digit.toName, digitPos)
-    digitPos = digitPos + fromInt(DIGIT_WIDTH, 0)
-  }
+              .map{ d => d.toName }
+  digits.nextToEachOther(startingWhere, DIGIT_WIDTH)
 }
+
+def nextToEachOther(imageNames: List[String], from: Vec2d, width: Int): Unit / Canvas = {
+  var pos = from
+  imageNames.foreach { imageName =>
+    do drawImageWithName(imageName, pos)
+    pos = pos + fromInt(width, 0)
+  }
+} 
 
 def digits(n: Int): List[Int] = {
   var remainder = n

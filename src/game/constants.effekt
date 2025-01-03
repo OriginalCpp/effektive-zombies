@@ -87,12 +87,18 @@ val COMBO_WIDTH = 16
 val COMBO_HEIGHT = 16
 val COMBO_POS = fromInt(GAME_WIDTH, GAME_HEIGHT) - fromInt(COMBO_WIDTH, COMBO_HEIGHT)
 
+val HEART_WIDTH = 16
+val HEART_HEIGHT = 16
+val HEART_PADDING = 4
+val LIFE_POS = fromInt(0, GAME_HEIGHT - HEART_HEIGHT)
+
 type Path = String
 val ASSET_PATH = "../assets/"
 val NUMBER_PATH = ASSET_PATH ++ "numbers/"
 val SCORE_KEY = "score"
 val COMBO_KEY = "combo"
 val WAVE_KEY = "wave"
+val HEART_KEY = "heart"
 val ZERO_KEY = "0"
 val ONE_KEY = "1"
 val TWO_KEY = "2"
@@ -107,6 +113,7 @@ val imagesToLoad = Immutable::emptyMap[String, Path]()
                   .Immutable::update(SCORE_KEY, "score.png")
                   .Immutable::update(COMBO_KEY, "head.png")
                   .Immutable::update(WAVE_KEY, "wave.png")
+                  .Immutable::update(HEART_KEY, "heart.png")
                   .Immutable::update(ZERO_KEY, "digit/0.png")
                   .Immutable::update(ONE_KEY, "digit/1.png")
                   .Immutable::update(TWO_KEY, "digit/2.png")

@@ -20,7 +20,7 @@ def fittingSizes(width: Int, height: Int): (Int, Int) = {
   }
 }
 
-val GAME_WIDTH = 384
+val GAME_WIDTH = 768
 val GAME_HEIGHT = (GAME_WIDTH.toDouble / ASPECT_RATIO).toInt()
 val GAME_CENTER = fromInt(GAME_WIDTH / 2, GAME_HEIGHT / 2)
 
@@ -74,9 +74,29 @@ val START_GAME = GameState(START_PLAYER, [], START_TIMERS, START_WAVE, START_SCO
 
 //------------------- UI -------------------
 type Path = String
+val ASSET_PATH = "../assets/"
+val NUMBER_PATH = ASSET_PATH ++ "numbers/"
 val SCORE_KEY = "score"
+val ONE_KEY = "1"
+val TWO_KEY = "2"
+val THREE_KEY = "3"
+val FOUR_KEY = "4"
+val FIVE_KEY = "5"
+val SIX_KEY = "6"
+val SEVEN_KEY = "7"
+val EIGHT_KEY = "8"
+val NINE_KEY = "9"
 val imagesToLoad = Immutable::emptyMap[String, (Path, Vec2d)]()
-                  .Immutable::update(SCORE_KEY, ("../assets/score.png", NULL_VECTOR))
+                  .Immutable::update(SCORE_KEY, (ASSET_PATH ++ "score.png", NULL_VECTOR))
+                  .Immutable::update(ONE_KEY, (NUMBER_PATH ++ "1.png", NULL_VECTOR))
+                  .Immutable::update(TWO_KEY, (NUMBER_PATH ++ "2.png", NULL_VECTOR))
+                  .Immutable::update(THREE_KEY, (NUMBER_PATH ++ "3.png", NULL_VECTOR))
+                  .Immutable::update(FOUR_KEY, (NUMBER_PATH ++ "4.png", NULL_VECTOR))
+                  .Immutable::update(FIVE_KEY, (NUMBER_PATH ++ "5.png", NULL_VECTOR))
+                  .Immutable::update(SIX_KEY, (NUMBER_PATH ++ "6.png", NULL_VECTOR))
+                  .Immutable::update(SEVEN_KEY, (NUMBER_PATH ++ "7.png", NULL_VECTOR))
+                  .Immutable::update(EIGHT_KEY, (NUMBER_PATH ++ "8.png", NULL_VECTOR))
+                  .Immutable::update(NINE_KEY, (NUMBER_PATH ++ "9.png", NULL_VECTOR))
 
 val DEATH_BACKGROUND = 
   Simple(Rect(NULL_VECTOR, GAME_WIDTH.toDouble, GAME_HEIGHT.toDouble, Black()))

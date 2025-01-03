@@ -17,7 +17,7 @@ import src/drawable/simple
 interface Canvas {
   def draw(drawable: ManipulatedDrawable): Unit
   def write(text: Text): Unit
-  def drawImage(image: Image): Unit
+  def drawImageWithName(name: String, pos: Vec2d): Unit
   def clear(): Unit
 }
 
@@ -189,6 +189,35 @@ def render(game: GameState): Unit / { Canvas, Input } = {
     gunAngle, None()
   ))
   game.objects.foreach { o => do draw(o.getHitbox()) }
+
+  renderUI(game)
+}
+
+def renderUI(game: GameState): Unit / Canvas = {
+  val rawScoreDigits = digits(game.score.score)
+  val scoreDigits = fill(SCORE_DIGITS - rawScoreDigits.size(), 0)
+                   .append(rawScoreDigits.take(SCORE_DIGITS))
+  drawDigits(scoreDigits)
+  do drawImageWithName(SCORE_KEY, SCORE_POS)
+}
+
+def drawDigits(digits: List[Int]): Unit / Canvas = {
+  var pos = SCORE_POS + fromInt(SCORE_WIDTH, 0)
+  digits.foreach { digit =>
+    do drawImageWithName(show(digit), pos)
+    pos = pos + fromInt(DIGIT_WIDTH, 0)
+  }
+}
+
+def digits(n: Int): List[Int] = {
+  var remainder = n
+  var digits = Nil[Int]()
+  while(remainder != 0) {
+    val digit = remainder.mod(10)
+    digits = Cons(digit, digits)
+    remainder = remainder / 10
+  }
+  digits
 }
 
 def renderDeathScreen(): Unit / Canvas = {

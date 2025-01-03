@@ -77,13 +77,15 @@ namespace Immutable {
     }
   }
   
-  def get[K, V](map: Immutable::Map[K, V], key: K): V / Exception[OutOfBounds] = {
+  def get[K, V](map: Immutable::Map[K, V], key: K): V / Exception[MissingValue] = {
     def predicate(pair: (K, V)): Bool = {
       val (k, v) = pair
       k.equals(key)
     }
     val keyIndex = map.findIndex(predicate)
-    val (_, v) = map.get(keyIndex)
+    val (_, v) = try { 
+      map.get(keyIndex)
+    } with Exception[OutOfBounds] { def raise(_, _) = missingValue() }
     v
   }
 }

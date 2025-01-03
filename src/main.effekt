@@ -37,7 +37,7 @@ def main(): Unit = {
   }
 
   val loadedImages = imagesToLoad.map { 
-    case (key, (path, pos)) => (key, Image(loadImage(path), pos)) 
+    case (key, path) => (key, loadImage(path)) 
   }
 
   def idleCallback(deadline: IdleDeadline): Unit = {
@@ -46,8 +46,6 @@ def main(): Unit = {
       if (game.get.player.isAlive) {
         val updatedGame = game.get.update(dt) 
         render(updatedGame)
-        with on[OutOfBounds].ignore
-        do drawImage(loadedImages.Immutable::get(SCORE_KEY))
         game.set(updatedGame)
       } else {
         println(show(game.get.score))
@@ -89,12 +87,14 @@ def main(): Unit = {
         )
         resume(())
       }
-      def drawImage(image) = {
-        if (image.image.isLoaded()) {
+      def drawImageWithName(imageName, pos) = {
+        with on[MissingValue].panic
+        val loadedImage = loadedImages.Immutable::get(imageName)
+        if (loadedImage.isLoaded()) {
           ctx.get.drawImage(
-            image.image,
-            image.position.x.toInt,
-            image.position.y.toInt
+            loadedImage,
+            pos.x.toInt,
+            pos.y.toInt
           )
         }
         resume(())

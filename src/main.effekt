@@ -43,14 +43,9 @@ def main(): Unit = {
   def idleCallback(deadline: IdleDeadline): Unit = {
     try {
       val dt = timeSinceLastFrame()
-      if (game.get.player.isAlive) {
-        val updatedGame = game.get.update(dt) 
-        render(updatedGame)
-        game.set(updatedGame)
-      } else {
-        println(show(game.get.score))
-        renderDeathScreen()
-      }
+      val updatedGame = game.get.update(dt) 
+      render(updatedGame)
+      game.set(updatedGame)
     } with Canvas {
       def draw(drawable) = {
         def drawSimple(d: SimpleDrawable): Unit = d match {
@@ -128,24 +123,11 @@ def main(): Unit = {
       (mousePosInWindow - canvasOriginRelativeToWindow) * Vec2d(xRatio, yRatio)
     mousePos.set(mousePosInGame)
   }
-  def mouseDownHandler(event: Event): Unit = {
-    val leftButtonPressed = event.getButton() == 0
-    if (leftButtonPressed) {
-      val player = game.get.player
-      if (player.isAlive()) {
-        val playerCenter = player.drawable.getCenter()
-        val gunAngle = angleClockwise(mousePos.get - playerCenter)
-        val bulletDrawable = player.gun.changeColor(Black())
-        val bullet = Bullet(
-          Rotate(Simple(bulletDrawable), gunAngle, Some(playerCenter)),
-          Vec2d(BULLET_SPEED, 0.0).rotate(gunAngle)
-        )
-        game.map{g => g.addObject(bullet)}
-      } else if (mousePos.get.isInside(RETRY_BUTTON.toHitbox())) {
-        game.set(START_GAME)
-      }
-    }
-  }
+  def mouseDownHandler(event: Event): Unit = 
+    keysPressed.update(LEFT_CLICK, event.getButton() == 0)
+
+  def mouseUpHandler(event: Event): Unit =
+    keysPressed.update(LEFT_CLICK, event.getButton() != 0)
 
   def resizeHandler(event: Event): Unit = {
     val (newWidth, newHeight) = fittingSizes(windowWidth(), windowHeight())
@@ -158,6 +140,7 @@ def main(): Unit = {
   addEventListener(KEY_UP, releasedHandler)
   addEventListener(MOUSE_MOVE, mouseMoveHandler)
   addEventListener(MOUSE_DOWN, mouseDownHandler)
+  addEventListener(MOUSE_UP, mouseUpHandler)
   addEventListener(RESIZE, resizeHandler)
 
   requestIdleCallback(idleCallback)

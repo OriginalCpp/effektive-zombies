@@ -81,15 +81,15 @@ def spawnZombie(game: GameState): GameObject / random = {
 
 def spawnBullet(player: Player): List[GameObject] / Input = {
   if (do isPressed(LEFT_CLICK)) {
-      val playerCenter = player.drawable.getCenter()
-      val gunAngle = angleClockwise(do mousePos() - playerCenter)
-      val bulletDrawable = player.gun.changeColor(Black())
-      val bullet = Bullet(
-        Rotate(Simple(bulletDrawable), gunAngle, Some(playerCenter)),
-        Vec2d(BULLET_SPEED, 0.0).rotate(gunAngle)
-      )
-      [bullet]
-    } else Nil()
+    val playerCenter = player.drawable.getCenter()
+    val gunAngle = angleClockwise(do mousePos() - playerCenter)
+    val bulletDrawable = player.gun.changeColor(Black())
+    val bullet = Bullet(
+      Rotate(Simple(bulletDrawable), gunAngle, Some(playerCenter)),
+      Vec2d(BULLET_SPEED, 0.0).rotate(gunAngle)
+    )
+    [bullet]
+  } else Nil()
 }
 
 def wasdDirection(): Vec2d / Input = {
@@ -164,7 +164,8 @@ def update(game: GameState, dt: Int): GameState / { Input, random } = game.menu 
       try { timers.bulletTimer.timer(dt, Nil[GameObject]) }
       with elapsed[List[GameObject]] {
         val bullet = spawnBullet(player)
-        (Timer(BULLET_INTERVAL), bullet)
+        val timer = if (bullet.isEmpty) Timer(0) else Timer(BULLET_INTERVAL) 
+        (timer, bullet)
       }
 
     val (remaining, deadZombies, bulletMissed) = 

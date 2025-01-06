@@ -232,7 +232,7 @@ def render(game: GameState): Unit / { Canvas, Input } = game.menu match {
     game.objects.foreach { o => do draw(o.getHitbox()) }
 
     renderUI(game)
-  case Retry() => renderDeathScreen()
+  case Retry() => renderDeathScreen(game.score)
 }
 
 def renderMainMenu(): Unit / Canvas = {
@@ -265,31 +265,26 @@ def renderUI(game: GameState): Unit / Canvas = {
 }
 
 def drawDigits(rawDigits: List[Int], howMany: Int, startingWhere: Vec2d): Unit / Canvas = {
-  def toName(digit: Int): String = digit match {
-    case 0 => ZERO_KEY
-    case 1 => ONE_KEY
-    case 2 => TWO_KEY
-    case 3 => THREE_KEY
-    case 4 => FOUR_KEY
-    case 5 => FIVE_KEY
-    case 6 => SIX_KEY
-    case 7 => SEVEN_KEY
-    case 8 => EIGHT_KEY
-    case _ => NINE_KEY
-  }
   val digits = fill(howMany - rawDigits.size(), 0)
               .append(rawDigits.take(SCORE_DIGITS))
-              .map{ d => d.toName }
+              .map{ d => digitKey(d) }
   digits.nextToEachOther(startingWhere, DIGIT_WIDTH)
 }
 
-def nextToEachOther(imageNames: List[String], from: Vec2d, width: Int): Unit / Canvas = {
+def nextToEachOther(
+  imageNames: List[String],
+  from: Vec2d,
+  widths: List[Int]
+): Unit / Canvas = {
   var pos = from
-  imageNames.foreach { imageName =>
+  imageNames.zip(widths).foreach { case (imageName, width) =>
     do drawImageWithName(imageName, pos)
     pos = pos + fromInt(width, 0)
   }
-} 
+}
+
+def nextToEachOther(imageNames: List[String], from: Vec2d, width: Int): Unit / Canvas =
+  nextToEachOther(imageNames, from, fill(imageNames.size, width))
 
 def digits(n: Int): List[Int] = {
   var remainder = n
@@ -302,9 +297,28 @@ def digits(n: Int): List[Int] = {
   if (digits.isEmpty) 0.singleton else digits
 }
 
-def renderDeathScreen(): Unit / Canvas = {
+def renderDeathScreen(score: Score): Unit / Canvas = {
   do draw(DEATH_BACKGROUND)
   do write(YOU_DIED)
+  
+  val scoreDigits = digits(score.score)
+  val maxComboDigits = digits(score.maxCombo).map{digitKey}
+
+  val scoreInfoWidth = SCORE_WIDTH + SCORE_DIGITS * DIGIT_WIDTH
+  val comboInfoWidth = COMBO_WIDTH + maxComboDigits.size * DIGIT_WIDTH
+  val offset = fromInt((scoreInfoWidth - comboInfoWidth) / 2, 0)
+
+  val realScorePos = RETRY_SCORE_POS + offset
+  do drawImageWithName(SCORE_KEY, realScorePos)
+  drawDigits(scoreDigits, SCORE_DIGITS, realScorePos + fromInt(SCORE_WIDTH, 0))
+
+  val realComboStartPos = RETRY_MAX_COMBO_START_POS + offset
+  nextToEachOther(
+    maxComboDigits.append(COMBO_KEY.singleton),
+    realComboStartPos,
+    fill(maxComboDigits.size, DIGIT_WIDTH).append(COMBO_WIDTH.singleton)
+  )
+
   do draw(Simple(RETRY_BUTTON))
   do write(RETRY_TEXT)
 }

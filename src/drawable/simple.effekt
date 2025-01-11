@@ -20,32 +20,59 @@ def show(color: Color): String = color match {
 type SimpleDrawable {
   Rect(upperLeft: Vec2d, width: Double, height: Double, color: Color)
   Circle(center: Vec2d, radius: Double, color: Color)
+  Image(
+    name: String, upperLeft: Vec2d, width: Double, height: Double, hitbox: Hitbox
+  )
 }
 
 def changeColor(drawable: SimpleDrawable, to: Color): SimpleDrawable = drawable match {
   case Rect(uL, w, h, _) => Rect(uL, w, h, to)
   case Circle(c, r, _) => Circle(c, r, to)
+  case Image(_, _, _, _, _) => drawable
+}
+
+def getWidth(drawable: SimpleDrawable): Double = drawable match {
+  case Rect(_, w, _, _) => w
+  case Circle(_, r, _) => 2.0 * r
+  case Image(_, _, w, _, _) => w
 }
 
 def getCenter(drawable: SimpleDrawable): Vec2d = drawable match {
   case Rect(upperLeft, width, height, _) => 
     upperLeft + Vec2d(0.5 * width, 0.5 * height)
   case Circle(center, _, _) => center
+  case Image(_, upperLeft, w, h, _) => 
+    upperLeft + Vec2d(0.5 * w, 0.5 * h)
 }
 
 def centerAt(drawable: SimpleDrawable, center: Vec2d): SimpleDrawable = drawable match {
   case Rect(_, width, height, color) => 
     Rect(center - Vec2d(width / 2.0, height / 2.0), width, height, color)
   case Circle(_, radius, color) => Circle(center, radius, color)
+  case Image(name, uL, w, h, hitbox) =>
+    val newUpperLeft = center - Vec2d(w / 2.0, h / 2.0)
+    val dV = newUpperLeft - uL
+    Image(name, newUpperLeft, w, h, hitbox.move(dV))
+}
+
+def upperLeftAt(drawable: SimpleDrawable, upperLeft: Vec2d): SimpleDrawable = drawable match {
+  case Rect(_, w, h, c) => Rect(upperLeft, w, h, c)
+  case Circle(_, r, c) => Circle(upperLeft + Vec2d(r, r), r, c)
+  case Image(name, old, w, h, hitbox) =>
+    val diff = upperLeft - old
+    Image(name, upperLeft, w, h, hitbox.move(diff))
 }
 
 def move(drawable: SimpleDrawable, dVec: Vec2d): SimpleDrawable = drawable match {
   case Rect(upperLeft, w, h, c) => Rect(upperLeft + dVec, w, h, c)
   case Circle(center, r, c) => Circle(center + dVec, r, c)
+  case Image(name, upperLeft, w, h, hitbox) => 
+    Image(name, upperLeft + dVec, w, h, hitbox.move(dVec))
 }
 
 def toHitbox(d: SimpleDrawable): Hitbox = d match {
   case Rect(uL, w, h, _) => 
     HRect(uL, uL + Vec2d(w, 0.0), uL + Vec2d(w, h), uL + Vec2d(0.0, h))
   case Circle(center, r, _) => HCircle(center, r)
+  case Image(_, uL, w, h, hitbox) => hitbox
 }

@@ -131,11 +131,11 @@ val SEVEN_KEY = "7"
 val EIGHT_KEY = "8"
 val NINE_KEY = "9"
 val imagesToLoad = Immutable::emptyMap[String, Path]()
-                  .Immutable::update(SCORE_KEY, "score.png")
-                  .Immutable::update(COMBO_KEY, "head.png")
-                  .Immutable::update(WAVE_KEY, "wave.png")
-                  .Immutable::update(HEART_KEY, "heart.png")
-                  .Immutable::update(ZOMBIE_KEY, "zombie.png")
+                  .Immutable::update(SCORE_KEY, "ui/score.png")
+                  .Immutable::update(COMBO_KEY, "ui/head.png")
+                  .Immutable::update(WAVE_KEY, "ui/wave.png")
+                  .Immutable::update(HEART_KEY, "ui/heart.png")
+                  .Immutable::update(ZOMBIE_KEY, "enemies/zombie.png")
                   .Immutable::update(ZERO_KEY, "digit/0.png")
                   .Immutable::update(ONE_KEY, "digit/1.png")
                   .Immutable::update(TWO_KEY, "digit/2.png")

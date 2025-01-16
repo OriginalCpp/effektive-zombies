@@ -237,7 +237,7 @@ val ZOMBIE_DEATH_ANIMATION = Animation(
 def zombieFactory(pos: Vec2d): GameObject = Zombie(
   Simple(ZOMBIE_ALIVE_IMG.centerAt(pos)), 
   Vec2d(ZOMBIE_BASE_SPEED, 0.0),
-  false
+  Alive()
 )
 
 val DEATH_BACKGROUND = 

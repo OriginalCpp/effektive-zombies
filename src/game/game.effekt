@@ -111,7 +111,7 @@ def die(gameObject: GameObject): GameObject = gameObject match {
   case Zombie(drawable, _, _) => 
     Zombie(
       drawable.setInner(ZOMBIE_DEATH_ANIMATION.centerAt(drawable.getCenter())), 
-      NULL_VECTOR, true
+      NULL_VECTOR, Dead()
     )
 }
 
@@ -129,14 +129,14 @@ def shooting(objects: List[GameObject]): (List[GameObject], Int, Bool) = {
   val (bulletsThatHit, remainingBullets) = bullets.partition {
     case Bullet(sHitbox, _) =>
       zombies.any {
-        case Zombie(zHitbox, _, false) => sHitbox.collides(zHitbox)
+        case Zombie(zHitbox, _, Alive()) => sHitbox.collides(zHitbox)
         case _ => false
       }
     case _ => false
   }
 
   val (dead, alive) = zombies.partition {
-    case Zombie(zHitbox, _, false) =>
+    case Zombie(zHitbox, _, Alive()) =>
       bulletsThatHit.any {
         case Bullet(sHitbox, _) => zHitbox.collides(sHitbox)
         case _ => false
@@ -176,19 +176,19 @@ def update(game: GameState, dt: Int): GameState / { Input, random } = game.menu 
       shooting(shotBullet.append(objects))
 
     val (damagingZombies, remainingObjects) = remaining.partition {
-      case Zombie(hitbox, _, false) => hitbox.collides(Simple(player.drawable))
+      case Zombie(hitbox, _, Alive()) => hitbox.collides(Simple(player.drawable))
       case _ => false
     }
 
     val playerHealthLoss = damagingZombies.size
 
     val movedObjects = remainingObjects.map {
-      case Zombie(h, m, false) =>
+      case Zombie(h, m, Alive()) =>
         val zombieCenter = h.getCenter()
         val zombiePlayerVec = player.drawable.getCenter() - zombieCenter
         val missingAngle = angleClockwise(zombiePlayerVec) - angleClockwise(m)
         val newHitbox = Rotate(h, missingAngle, None()).collapseRotations()
-        Zombie(newHitbox, m.rotate(missingAngle), false).move(dt)
+        Zombie(newHitbox, m.rotate(missingAngle), Alive()).move(dt)
       case o => o.move(dt)
     }
 

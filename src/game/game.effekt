@@ -106,6 +106,15 @@ def move(player: Player, dt: Int): Player / Input = {
   )
 }
 
+def die(gameObject: GameObject): GameObject = gameObject match {
+  case Bullet(_, _) => gameObject
+  case Zombie(drawable, _, _) => 
+    Zombie(
+      drawable.setInner(ZOMBIE_DEATH_ANIMATION.centerAt(drawable.getCenter())), 
+      NULL_VECTOR, true
+    )
+}
+
 def shooting(objects: List[GameObject]): (List[GameObject], Int, Bool) = {
   val (inRange, outOfRange) = objects.partition {
     case Bullet(hitbox, _) => hitbox.visible()
@@ -114,20 +123,20 @@ def shooting(objects: List[GameObject]): (List[GameObject], Int, Bool) = {
 
   val (bullets, zombies) = inRange.partition {
     case Bullet(_, _) => true
-    case Zombie(_, _) => false
+    case Zombie(_, _, _) => false
   }
 
   val (bulletsThatHit, remainingBullets) = bullets.partition {
     case Bullet(sHitbox, _) =>
       zombies.any {
-        case Zombie(zHitbox, _) => sHitbox.collides(zHitbox)
+        case Zombie(zHitbox, _, false) => sHitbox.collides(zHitbox)
         case _ => false
       }
     case _ => false
   }
 
   val (dead, alive) = zombies.partition {
-    case Zombie(zHitbox, _) =>
+    case Zombie(zHitbox, _, false) =>
       bulletsThatHit.any {
         case Bullet(sHitbox, _) => zHitbox.collides(sHitbox)
         case _ => false
@@ -135,7 +144,9 @@ def shooting(objects: List[GameObject]): (List[GameObject], Int, Bool) = {
     case _              => false
   }
 
-  (alive.append(remainingBullets), dead.size, outOfRange.nonEmpty)
+  val died = dead.map {z => z.die()}
+
+  (died.append(alive.append(remainingBullets)), dead.size, outOfRange.nonEmpty)
 }
 
 def update(game: GameState, dt: Int): GameState / { Input, random } = game.menu match {
@@ -165,19 +176,19 @@ def update(game: GameState, dt: Int): GameState / { Input, random } = game.menu 
       shooting(shotBullet.append(objects))
 
     val (damagingZombies, remainingObjects) = remaining.partition {
-      case Zombie(hitbox, _) => hitbox.collides(Simple(player.drawable))
+      case Zombie(hitbox, _, false) => hitbox.collides(Simple(player.drawable))
       case _ => false
     }
 
     val playerHealthLoss = damagingZombies.size
 
     val movedObjects = remainingObjects.map {
-      case Zombie(h, m) =>
+      case Zombie(h, m, false) =>
         val zombieCenter = h.getCenter()
         val zombiePlayerVec = player.drawable.getCenter() - zombieCenter
         val missingAngle = angleClockwise(zombiePlayerVec) - angleClockwise(m)
         val newHitbox = Rotate(h, missingAngle, None()).collapseRotations()
-        Zombie(newHitbox, m.rotate(missingAngle)).move(dt)
+        Zombie(newHitbox, m.rotate(missingAngle), false).move(dt)
       case o => o.move(dt)
     }
 
@@ -196,7 +207,11 @@ def update(game: GameState, dt: Int): GameState / { Input, random } = game.menu 
 
     val updatedPlayer = movedPlayer.changeHealth(playerHealthLoss.neg)
                         .keepInsideScreen()
-    val updatedObjects = spawnedZombie.append(movedObjects)
+    val updatedObjects = spawnedZombie.append(movedObjects).foldRight(Nil()){(o, os) => 
+      try { Cons(o.animate(dt), os) } with Animation {
+        def finished() = os
+      }
+    }
     val updatedTimers = 
       GameTimer(updatedZombieTimer, updatedWaveTimer, updatedBulletTimer)
     val updatedScore = score.update(playerHealthLoss > 0 || bulletMissed, deadZombies)

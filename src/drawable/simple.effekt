@@ -23,6 +23,9 @@ record Frame(frame: SimpleDrawable, timer: Timer)
 def move(frame: Frame, dVec: Vec2d): Frame =
   Frame(frame.frame.move(dVec), frame.timer)
 
+def moveSrc(frame: Frame, dVec: Vec2d): Frame = 
+  Frame(frame.frame.moveSrc(dVec), frame.timer)
+
 def changeColor(frame: Frame, to: Color): Frame =
   Frame(frame.frame.changeColor(to), frame.timer)
 
@@ -44,6 +47,33 @@ def mapAnimation(
       next.map{frame => Frame(f(frame.frame), frame.timer)}
     )
   case noAnimation => noAnimation
+}
+
+interface Animation {
+  def finished(): Nothing
+}
+
+def animate(drawable: SimpleDrawable, dt: Int): SimpleDrawable / Animation = drawable match {
+  case Animation(current, next) => 
+    val newCurrTimer = current.timer.elapse(dt)
+    if (newCurrTimer.elapsed()) {
+      next match {
+        case Cons(f, fs) => Animation(f, fs)
+        case Nil() => do finished()
+      }
+    } else {
+      Animation(Frame(current.frame, newCurrTimer), next)
+    }
+  case _ => drawable
+}
+
+def moveSrc(drawable: SimpleDrawable, dVec: Vec2d): SimpleDrawable = drawable match {
+  case Rect(_, _, _, _) => drawable
+  case Circle(_, _, _) => drawable
+  case Image(name, src, dest, hitbox) => 
+    Image(name, src.map{s => s.move(dVec)}, dest, hitbox)
+  case Animation(current, next) => 
+    Animation(current.moveSrc(dVec), next.map{f => f.moveSrc(dVec)})
 }
 
 def changeColor(drawable: SimpleDrawable, to: Color): SimpleDrawable = drawable match {

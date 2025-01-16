@@ -2,7 +2,7 @@ module game/constants
 
 import src/game/score
 import src/game/gamestate
-import src/game/gameObject
+import src/game/gameobject
 import src/game/gametimer
 import src/game/player
 import src/drawable/simple
@@ -163,36 +163,41 @@ def digitKey(digit: Int): String = digit match {
 
 def digitImage(digit: Int): SimpleDrawable = 
   Image(
-    digit.digitKey, NULL_VECTOR,
-    DIGIT_WIDTH.toDouble, DIGIT_HEIGHT.toDouble,
+    digit.digitKey,
+    None(),
+    Rect(NULL_VECTOR, DIGIT_WIDTH.toDouble, DIGIT_HEIGHT.toDouble, Black()),
     EMPTY_HITBOX
   )
 
 val SCORE_IMAGE = 
   Image(
-    SCORE_KEY, SCORE_POS, 
-    SCORE_WIDTH.toDouble, SCORE_HEIGHT.toDouble, 
+    SCORE_KEY, 
+    None(),
+    Rect(SCORE_POS, SCORE_WIDTH.toDouble, SCORE_HEIGHT.toDouble, Black()), 
     EMPTY_HITBOX
   )
 
 val COMBO_IMAGE = 
   Image(
-    COMBO_KEY, COMBO_POS,
-    COMBO_WIDTH.toDouble, COMBO_HEIGHT.toDouble,
+    COMBO_KEY, 
+    None(),
+    Rect(COMBO_POS, COMBO_WIDTH.toDouble, COMBO_HEIGHT.toDouble, Black()),
     EMPTY_HITBOX
   )
 
 val WAVE_IMAGE = 
   Image(
-    WAVE_KEY, WAVE_POS,
-    WAVE_WIDTH.toDouble, WAVE_HEIGHT.toDouble,
+    WAVE_KEY, 
+    None(),
+    Rect(WAVE_POS, WAVE_WIDTH.toDouble, WAVE_HEIGHT.toDouble, Black()),
     EMPTY_HITBOX
   )
 
 val HEART_IMAGE = 
   Image(
-    HEART_KEY, LIFE_POS,
-    HEART_WIDTH.toDouble, HEART_HEIGHT.toDouble,
+    HEART_KEY, 
+    None(),
+    Rect(LIFE_POS, HEART_WIDTH.toDouble, HEART_HEIGHT.toDouble, Black()),
     EMPTY_HITBOX
   )
 
@@ -206,6 +211,18 @@ val ZOMBIE_BOTTOM_ARM =
 val ZOMBIE_BODY = Rect(fromInt(0, 2), 16.0, 16.0, Black())
 val ZOMBIE_HITBOX = 
   ZOMBIE_BODY.compose(ZOMBIE_TOP_ARM.compose(ZOMBIE_BOTTOM_ARM)).toHitbox
+
+val ZOMBIE_ALIVE_SRC = Rect(NULL_VECTOR, ZOMBIE_WIDTH, ZOMBIE_HEIGHT, Black())
+
+def zombieFactory(pos: Vec2d): GameObject = Zombie(
+  Simple(Image(
+    ZOMBIE_KEY, 
+    Some(ZOMBIE_ALIVE_SRC),
+    Rect(NULL_VECTOR, ZOMBIE_WIDTH, ZOMBIE_HEIGHT, Black()),
+    ZOMBIE_HITBOX
+  ).centerAt(pos)), 
+  Vec2d(ZOMBIE_BASE_SPEED, 0.0)
+)
 
 val DEATH_BACKGROUND = 
   Simple(Rect(NULL_VECTOR, GAME_WIDTH.toDouble, GAME_HEIGHT.toDouble, Black()))

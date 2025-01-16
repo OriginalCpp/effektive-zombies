@@ -56,15 +56,6 @@ type Side {
 
 val SIDES = [Top(), Right(), Bottom(), Left()]
 
-def zombieFactory(pos: Vec2d): GameObject = Zombie(
-  Simple(Image(
-    ZOMBIE_KEY, NULL_VECTOR, 
-    ZOMBIE_WIDTH, ZOMBIE_HEIGHT,
-    ZOMBIE_HITBOX
-  ).centerAt(pos)), 
-  Vec2d(ZOMBIE_BASE_SPEED, 0.0)
-)
-
 def spawnZombie(): GameObject / random = {
   val w = GAME_WIDTH.toDouble
   val h = GAME_HEIGHT.toDouble

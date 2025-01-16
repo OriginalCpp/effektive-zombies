@@ -54,18 +54,36 @@ def main(): Unit = {
             ctx.get.drawCircle(
               center.x.toInt, center.y.toInt, radius.toInt, show(color)
             )
-          case Image(name, upperLeft, width, height, _) =>
+          case Image(name, src, dest, _) =>
             with on[MissingValue].report
             val loadedImage = loadedImages.Immutable::get(name)
             if (loadedImage.isLoaded()) {
-              ctx.get.drawImage(
-                loadedImage,
-                upperLeft.x.toInt,
-                upperLeft.y.toInt,
-                width.toInt,
-                height.toInt
-              )
+              val destUL = dest.getUpperLeft()
+              src match {
+                case Some(s) =>
+                  val srcUL = s.getUpperLeft()
+                  ctx.get.drawImage(
+                    loadedImage,
+                    srcUL.x.toInt,
+                    srcUL.y.toInt,
+                    s.getWidth().toInt,
+                    s.getHeight().toInt,
+                    destUL.x.toInt,
+                    destUL.y.toInt,
+                    dest.getWidth().toInt,
+                    dest.getHeight().toInt
+                  )
+                case None() =>
+                  ctx.get.drawImage(
+                    loadedImage,
+                    destUL.x.toInt,
+                    destUL.y.toInt,
+                    dest.getWidth().toInt,
+                    dest.getHeight().toInt
+                  )
+              }
             }
+          case Animation(current, _) => drawSimple(current.frame)
         }
 
         def unwrapDraw(d: ManipulatedDrawable): Unit = d match {

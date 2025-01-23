@@ -152,4 +152,10 @@ def gameSuite() = suite("game") {
       "Bullet that hit zombie is still in the game"
     )
   }
+
+  test("digits") {
+    val digits = digits(420)
+
+    assertEqual(digits, [4, 2, 0])
+  }
 }

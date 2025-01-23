@@ -292,7 +292,7 @@ def renderUI(game: GameState): Unit / Canvas = {
 /// If more digits should be drawn than in the list, 0's get prepended
 def drawDigits(rawDigits: List[Int], howMany: Int, startingWhere: Vec2d): Unit / Canvas = {
   val digits = fill(howMany - rawDigits.size(), 0)
-              .append(rawDigits.take(SCORE_DIGITS))
+              .append(rawDigits.take(howMany))
               .map{ d => digitImage(d) }
   digits.nextToEachOther(startingWhere, 0.0)
 }

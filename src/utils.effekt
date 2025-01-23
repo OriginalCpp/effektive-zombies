@@ -52,6 +52,7 @@ def toList[T](option: Option[T]): List[T] = option match {
   case None() => []
 }
 
+/// Chooses randomly from the given List, according to the given probabilities
 /// Can return None if the given lists are not of the same length
 /// or if the probabilities do not add up to 1
 def choose[T](chooseFrom: List[T], probabilities: List[Double]): Option[T] / random = {
@@ -73,6 +74,7 @@ def contains[T](list: List[T], elem: T) { equals: (T, T) => Bool }: Bool = list 
   case Nil() => false
 }
 
+/// Find the index of the first element satisfying the predicate
 def findIndex[T](list: List[T], predicate: T => Bool at {}): Int = {
   def go(list: List[T], i: Int): Int = list match {
     case Cons(x, rest) => if (predicate(x)) i else go(rest, i + 1)

@@ -84,7 +84,7 @@ def main(): Unit = {
                   )
               }
             }
-          case Animation(current, _) => drawSimple(current.frame)
+          case AnimationW(animation) => drawSimple(animation.current.frame)
         }
 
         def unwrapDraw(d: ManipulatedDrawable): Unit = d match {

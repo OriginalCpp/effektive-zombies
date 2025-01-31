@@ -60,12 +60,13 @@ def map(
 
 effect animationFinished(): Animation
 
-def animate(drawable: SimpleDrawable, dt: Int): SimpleDrawable / animationFinished = drawable match {
+def animate(
+  drawable: SimpleDrawable, dt: Int
+): SimpleDrawable / animationFinished = drawable match {
   case AnimationW(animation) => animation.animate(dt).wrap
   case _ => drawable
 }
 
-/// Animate this Drawable according to the elapsed time dt
 def animate(animation: Animation, dt: Int): Animation / animationFinished = {
   try { 
     val updated = animation.current.timer.elapse(dt)

@@ -8,6 +8,8 @@
 
 \usepackage{tikz-uml} %UML
 
+\setlength{\abovecaptionskip}{0pt plus 3pt minus 2pt}
+
 \begin{document}
 	\setbeamertemplate{caption}{\raggedright\insertcaption\par}
 	\setbeamertemplate{itemize item}{\raisebox{0.1em}{\textbullet}} % Adjust bullet position
@@ -26,8 +28,6 @@
 	%	- Data structures
 	%	- Data flow   (where effects?)
 	%4. Demo
-	% Wo Code zeigen? Überhaupt zeigen? Denke schon zeigen
-	% Den Code zeigen den man sehen möchte. Also Code der Effekte benutzt
 	% Was für Challenges
 	
 	%Bis Freitag Abend Präsentation fertig, dann üben
@@ -57,6 +57,12 @@
 			\item Canvas API
 		\end{itemize}
 		\end{Large}
+	\end{frame}
+	
+	\begin{frame}[plain, c]
+		\begin{center}
+			\Huge Demo
+		\end{center}
 	\end{frame}
 	
 	\begin{frame}
@@ -138,25 +144,37 @@
 		\end{enumerate}
 		\end{Large}
 	\end{frame}
-
-	%usage of effects
 	
 	\begin{frame}
 		\frametitle{FFI}
-		\begin{itemize}
-			\item talking to Canvas API:
+		\begin{columns}
+			\begin{column}{.5\linewidth}
 			\begin{itemize}
-				\item createCanvas
-				\item drawImage, drawRect, ...
-				\item set/getTransformation
-				\item clear
+				\item talking to Canvas API:
+				\begin{itemize}
+					\item createCanvas
+					\item drawImage, drawRect, ...
+					\item set/getTransformation
+					\item clear
+				\end{itemize}
+				\item Callbacks and Event(listeners)
+				\item Time
+				\item Window Size
 			\end{itemize}
-			\item Callbacks and Event(listeners)
-			\item Time
-			\item Window Size
-		\end{itemize}
+			\end{column}
+			\begin{column}{.5\linewidth}
+				\begin{figure}
+					\includegraphics[width=\linewidth]{images/drawRect.png}
+				\end{figure}
+				\begin{figure}
+					\includegraphics[width=\linewidth]{images/getKeygetClient.png}
+				\end{figure}
+				\begin{figure}
+					\includegraphics[width=\linewidth]{images/getWindowWidth.png}
+				\end{figure}
+			\end{column}
+		\end{columns}
 	\end{frame}
-	%show Code of two ffi functions
 	
 	\begin{frame}
 		\frametitle{Use of Effects}
@@ -171,24 +189,57 @@
 		\end{itemize}
 		\end{Large}
 	\end{frame}
-	%show animationFinished and Canvas / Input
-	
-	\begin{frame}[plain, c]
-		\begin{center}
-			\Huge Demo
-		\end{center}
+
+	\begin{frame}
+		\frametitle{animationFinished}
+		\begin{figure}
+			\includegraphics[width=.75\linewidth]{images/animate1.png}
+			\caption{game/game.effekt}
+		\end{figure}
+		\begin{figure}
+			\includegraphics[width=.75\linewidth]{images/animate2.png}
+			\caption{game/gameobject.effekt}
+		\end{figure}
+		\begin{figure}
+			\includegraphics[width=.75\linewidth]{images/animate3.png}
+			\caption{drawable/manipulated.effekt}
+		\end{figure}
 	\end{frame}
 	
 	\begin{frame}
-		\frametitle{Challenges}
-		\begin{itemize}
-			%say that you have no idea what to talk about here
-			%challenge: never use ffi except in main?
-			\item Key drops -> with intervals
-			\item resizing???
-			\item collision?
-		\end{itemize}
+		\frametitle{animationFinished}
+		\begin{figure}
+			\includegraphics[width=.9\linewidth]{images/animate4.png}
+			\caption{drawable/simple.effekt}
+		\end{figure}
+		\begin{figure}
+			\includegraphics[width=.9\linewidth]{images/animate5.png}
+			\caption{drawable/simple.effekt}
+		\end{figure}
 	\end{frame}
+	
+	
+	\begin{frame}
+		\frametitle{Challenges}
+		\begin{Large}
+		\begin{itemize}
+			\setlength{\itemsep}{.8em}
+			\item Collision
+			\item Resizing
+			\item Key drops $\rightarrow$ intervals
+		\end{itemize}
+		\end{Large}
+	\end{frame}
+	
+	\begin{frame}[plain, c]
+		\begin{center}
+		\begin{Huge}
+			Questions?
+		\end{Huge}
+		\end{center}
+	\end{frame}
+	
+	
 	
 	
 	

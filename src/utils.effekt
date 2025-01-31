@@ -1,5 +1,7 @@
 module utils
 
+def toDouble(b: Bool): Double = if (b) 1.0 else 0.0
+
 def flatten[T](optionOption: Option[Option[T]]): Option[T] = 
   optionOption.getOrElse{None()}
 

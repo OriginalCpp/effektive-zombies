@@ -30,6 +30,8 @@
 	% Den Code zeigen den man sehen möchte. Also Code der Effekte benutzt
 	% Was für Challenges
 	
+	%Bis Freitag Abend Präsentation fertig, dann üben
+	%falls noch Zeit: noch kurz background machen + zombie pixel line fixen
 	
 	\frame{\titlepage}
 	
@@ -57,30 +59,8 @@
 		\end{Large}
 	\end{frame}
 	
-	\begin{frame}[plain, c]
-		\begin{center}
-			\Huge Demo
-		\end{center}
-	\end{frame}
-	
 	\begin{frame}
-		\frametitle{FFI}
-		\begin{itemize}
-			\item talking to Canvas API:
-			\begin{itemize}
-				\item createCanvas
-				\item drawImage
-				\item setTransformation
-				\item clear
-			\end{itemize}
-			\item Events and Listeners
-			\item Time
-			\item Window Size
-		\end{itemize}
-	\end{frame}
-	
-	\begin{frame}
-		\frametitle{Structure}
+		\frametitle{Rough Structure}
 		\begin{Large}
 		\begin{itemize}
 			\setlength{\itemsep}{.5em}
@@ -146,44 +126,37 @@
 	\end{frame}
 	
 	\begin{frame}
-		\frametitle{Drawables}
-		\begin{center}
-		\scalebox{.55}{
-		\begin{tikzpicture}
-			\umlenum{ManipulatedDrawable}{
-				Simple(SimpleDrawable) \\
-				Rotate(inner: ManipulatedDrawable, rotation: Double, relativeTo: Option[Vec2d]) \\
-				Compose(ManipulatedDrawable, ManipulatedDrawable)
-			}{}
-			\umlenum[x = -7, y = -5]{SimpleDrawable}{
-				Rect(upperLeft: Vec2d, width: Double, height: Double, Color) \\
-				Circle(center: Vec2d, radius: Double, Color) \\
-				Image(name: String, src: Option[Drawable], dest: Drawable, hitbox: Hitbox) \\
-				Animation(current: Frame, next: List[Frame])
-			}{}
-			\umlenum[x = 6, y = -5]{Hitbox}{
-				HRect(Vec2d, Vec2d, Vec2d, Vec2d) \\
-				HCircle(center: Vec2d, radius: Double) \\
-				HCompose(Hitbox, Hitbox)
-			}{}
-			\umlclass[x = -10, y = 0]{Text}{
-				text: String \\
-				position: Vec2d \\
-				fontSizePX: Int \\
-				...
-			}{}
-			\umlclass[x = -7, y = -9]{Frame}{
-				frame: SimpleDrawable \\
-				timer: Timer
-			}{}
-			\umlcompo[anchor1=179, geometry=-|]{ManipulatedDrawable}{SimpleDrawable}
-			\umlcompo[anchor1=-5, geometry=-|]{SimpleDrawable}{Hitbox}
-			\umluniassoc[arg1=transformable to, pos1=.5]{ManipulatedDrawable}{Hitbox}
-			\umluniassoc[arg1=transformable to, pos1=.5]{SimpleDrawable}{Hitbox}
-			\umlcompo[anchor1=-90]{SimpleDrawable}{Frame}
-		\end{tikzpicture}}
-		\end{center}
+		\frametitle{Update}
+		\begin{Large}
+		\begin{enumerate}
+			\item Check "Menu"
+			\item Spawn Bullets/Zombies
+			\item Collision checks
+			\item Move objects and player
+			\item Update timers/score/wave
+			\item Repeat
+		\end{enumerate}
+		\end{Large}
 	\end{frame}
+
+	%usage of effects
+	
+	\begin{frame}
+		\frametitle{FFI}
+		\begin{itemize}
+			\item talking to Canvas API:
+			\begin{itemize}
+				\item createCanvas
+				\item drawImage, drawRect, ...
+				\item set/getTransformation
+				\item clear
+			\end{itemize}
+			\item Callbacks and Event(listeners)
+			\item Time
+			\item Window Size
+		\end{itemize}
+	\end{frame}
+	%show Code of two ffi functions
 	
 	\begin{frame}
 		\frametitle{Use of Effects}
@@ -191,12 +164,19 @@
 		\begin{itemize}
 			\setlength{\itemsep}{1em}
 			\item random
-			\item TimerEvent
-			\item Animation
+			\item elapsed
+			\item animationFinished
 			\item Canvas
 			\item Input
 		\end{itemize}
 		\end{Large}
+	\end{frame}
+	%show animationFinished and Canvas / Input
+	
+	\begin{frame}[plain, c]
+		\begin{center}
+			\Huge Demo
+		\end{center}
 	\end{frame}
 	
 	\begin{frame}
@@ -209,5 +189,55 @@
 			\item collision?
 		\end{itemize}
 	\end{frame}
+	
+	
+	
+	
+	
+	
+	
+	
+		%Delete this slide?
+	\iffalse
+	\begin{frame}
+		\frametitle{Drawables}
+		\begin{center}
+			\scalebox{.55}{
+				\begin{tikzpicture}
+					\umlenum{ManipulatedDrawable}{
+						Simple(SimpleDrawable) \\
+						Rotate(inner: ManipulatedDrawable, rotation: Double, relativeTo: Option[Vec2d]) \\
+						Compose(ManipulatedDrawable, ManipulatedDrawable)
+					}{}
+					\umlenum[x = -7, y = -5]{SimpleDrawable}{
+						Rect(upperLeft: Vec2d, width: Double, height: Double, Color) \\
+						Circle(center: Vec2d, radius: Double, Color) \\
+						Image(name: String, src: Option[Drawable], dest: Drawable, hitbox: Hitbox) \\
+						Animation(current: Frame, next: List[Frame])
+					}{}
+					\umlenum[x = 6, y = -5]{Hitbox}{
+						HRect(Vec2d, Vec2d, Vec2d, Vec2d) \\
+						HCircle(center: Vec2d, radius: Double) \\
+						HCompose(Hitbox, Hitbox)
+					}{}
+					\umlclass[x = -10, y = 0]{Text}{
+						text: String \\
+						position: Vec2d \\
+						fontSizePX: Int \\
+						...
+					}{}
+					\umlclass[x = -7, y = -9]{Frame}{
+						frame: SimpleDrawable \\
+						timer: Timer
+					}{}
+					\umlcompo[anchor1=179, geometry=-|]{ManipulatedDrawable}{SimpleDrawable}
+					\umlcompo[anchor1=-5, geometry=-|]{SimpleDrawable}{Hitbox}
+					\umluniassoc[arg1=transformable to, pos1=.5]{ManipulatedDrawable}{Hitbox}
+					\umluniassoc[arg1=transformable to, pos1=.5]{SimpleDrawable}{Hitbox}
+					\umlcompo[anchor1=-90]{SimpleDrawable}{Frame}
+			\end{tikzpicture}}
+		\end{center}
+	\end{frame}
+	\fi
 	
 \end{document}
